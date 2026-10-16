@@ -629,6 +629,114 @@ App.views.pay = async function () {
   subscribe();
   __payTimer = setInterval(function () { if (R) R.poll(300).then(function (l) { l.forEach(function (m) { onMsg(m, false); }); }); }, 15000);
 };
+/* ============================== 客户沟通分析 · 回复建议 ============================== */
+var __waMsgs = [], __waAn = null, __waTone = 'steady';
+App.views.wa = async function () {
+  const E = window.WAEngine;
+  const myName = (function () { try { return localStorage.getItem('aufcl_wa_myname') || 'RAYMOND'; } catch (e) { return 'RAYMOND'; } })();
+  setMain(pageHead('客户沟通分析 · 回复建议', '读取屏幕上的聊天内容 → 判断客户状态 → 按 SOP 生成地道英文回复（含中文解析）',
+      '<button class="btn ghost" data-act="wa-example">载入示例</button>') +
+    card('① 聊天内容', '三种方式任选 —— 全程只读取，不发送、不登录、不操作 WhatsApp/微信',
+      '<div class="form-row"><label>我的名字 / 号码（用于区分谁说的话）</label><input id="waMyName" class="input" value="' + esc(myName) + '" style="max-width:260px"></div>' +
+      '<textarea id="waText" placeholder="把聊天内容粘到这里，支持三种格式：\n1) WhatsApp 导出格式：[12/10/2026, 09:12] Sarah: Hi Raymond...\n2) 网页复制/截图 OCR：Sarah 换行 09:12 换行 内容\n3) 手工标注：客户：xxx 换行 我：xxx"></textarea>' +
+      '<div class="wa-row">' +
+      '<button class="wa-btn" data-act="wa-run">开始分析并生成回复</button>' +
+      '<button class="wa-btn ghost" data-act="wa-screen">抓取屏幕并识别（OCR）</button>' +
+      '<button class="wa-btn ghost" data-act="wa-pasteimg">粘贴截图识别（Ctrl+V）</button>' +
+      '<button class="wa-btn ghost" data-act="wa-clear">清空</button>' +
+      '<span class="wa-badge" id="waHint" style="font-size:12px;color:#9C9486"></span></div>' +
+      '<div class="wa-note"><b>安全说明：</b>本功能<b>不接触 WhatsApp 本身</b> —— 不登录、不点击、不发送、不读取接口，只做两件事：①识别你屏幕上的图像文字；②分析你粘贴的文本。聊天内容只在本机处理，不上传任何服务器。</div>') +
+    '<div id="waOut"></div>');
+  const $ = function (id) { return document.getElementById(id); };
+  const out = $('waOut');
+  function say(t, k) { const h = $('waHint'); if (h) { h.textContent = t || ''; h.style.color = k === 'err' ? '#B3261E' : (k === 'ok' ? '#1B7F4B' : '#9C9486'); } }
+  function run() {
+    const txt = ($('waText') || {}).value || '';
+    if (!txt.trim()) { say('请先粘贴聊天内容或抓取屏幕', 'err'); return; }
+    const mn = ($('waMyName') || {}).value || 'RAYMOND';
+    try { localStorage.setItem('aufcl_wa_myname', mn); } catch (e) {}
+    __waMsgs = E.parse(txt, [mn]);
+    if (!__waMsgs.length) { say('没解析出对话内容，请检查格式', 'err'); return; }
+    say('已解析 ' + __waMsgs.length + ' 条消息（点任意一条可切换「客户/我」）', 'ok');
+    __waAn = E.analyze(__waMsgs);
+    render();
+  }
+  function render() {
+    if (!__waAn) { out.innerHTML = ''; return; }
+    const a = __waAn;
+    const msgs = __waMsgs.map(function (m, i) {
+      const cls = m.who === 'them' ? 'them' : (m.who === 'me' ? 'me' : 'them');
+      const label = m.who === 'them' ? '客户' : (m.who === 'me' ? '我' : '客户?');
+      return '<div class="wa-msg ' + cls + '" data-wai="' + i + '"><span class="who">' + label + '</span><span class="tx">' + esc(m.text) + '</span><span class="tm">' + esc(m.t || '') + '</span></div>';
+    }).join('');
+    const tags = (a.concerns || []).map(function (c) { return '<span class="wa-tag">' + esc(c) + '</span>'; }).join('') || '<span class="wa-tag ok">无明显顾虑</span>';
+    const sig = (a.signals || []).map(function (c) { return '<span class="wa-tag">' + esc(c) + '</span>'; }).join('');
+    const factStr = ['money', 'qty', 'time', 'port', 'incoterm'].map(function (k) {
+      const arr = (a.facts[k] || []);
+      return arr.length ? (k + ': ' + arr.join(' / ')) : '';
+    }).filter(Boolean).join('　|　') || '未抽取到明确数字（可在下方回复里手动补）';
+    const rep = E.reply(a, { tone: __waTone });
+    out.innerHTML =
+      card('② 客户状态分析', '基于关键词与话术结构判断，不代表客户真实想法，仅供参考',
+        '<div class="wa-kpi">' +
+        '<div class="k"><div class="kl">阶段</div><div class="kv" style="font-size:14px">' + esc(a.stageZh) + '</div></div>' +
+        '<div class="k"><div class="kl">情绪</div><div class="kv" style="font-size:14px">' + esc(a.sentimentZh) + '</div></div>' +
+        '<div class="k"><div class="kl">消息</div><div class="kv">' + a.n + '<span style="font-size:12px;color:#9C9486">（客 ' + a.nThem + ' / 我 ' + a.nMe + '）</span></div></div>' +
+        '</div>' +
+        '<div style="margin:6px 0 4px;font-size:12.5px;color:#9C9486">顾虑与关注点</div><div>' + tags + '</div>' +
+        (sig ? '<div style="margin:8px 0 4px;font-size:12.5px;color:#9C9486">识别到的信号</div><div>' + sig + '</div>' : '') +
+        '<div class="wa-note" style="color:#B26A00"><b>风险提示：</b>' + esc(a.risk) + '</div>' +
+        '<div class="wa-note"><b>本阶段策略：</b>' + esc(a.stageAdvice) + '</div>' +
+        '<div class="wa-note"><b>抽取到的事实：</b>' + esc(factStr) + '</div>' +
+        '<div style="margin-top:12px">' + msgs + '</div>') +
+      card('③ SOP 回复建议（共情 → 事实 → 情理 → 方案 → 优惠 → 行动）', '英文可直接发；中文是该段落的设计意图。点段落可单独复制',
+        '<div class="wa-row" style="margin-bottom:10px"><span style="font-size:12.5px;color:#9C9486">语气：</span>' +
+        ['steady', 'push', 'warm'].map(function (t) { return '<button class="wa-btn ' + (t === __waTone ? '' : 'ghost') + '" data-watone="' + t + '">' + (E.TONES[t] ? E.TONES[t].zh : t) + '</button>'; }).join('') +
+        '<button class="wa-btn ghost" data-act="wa-copyall" style="margin-left:auto">复制英文全文</button></div>' +
+        rep.parts.map(function (p, i) {
+          return '<div class="wa-card" data-wacopy="' + i + '" title="点击复制这段英文"><h5>' + (i + 1) + ' · ' + p.key.toUpperCase() + '</h5>' +
+            '<div class="wa-en">' + esc(p.en) + '</div><div class="wa-zh">' + esc(p.zh) + '</div></div>';
+        }).join(''));
+    window.__waRep = rep;
+  }
+  document.addEventListener('click', async function (e) {
+    const t = e.target.closest ? e.target.closest('[data-act],[data-watone],[data-wacopy],[data-wai]') : null;
+    if (!t) return;
+    const act = t.getAttribute('data-act'), tone = t.getAttribute('data-watone'), cp = t.getAttribute('data-wacopy'), mi = t.getAttribute('data-wai');
+    if (act === 'wa-run') run();
+    else if (act === 'wa-clear') { $('waText').value = ''; __waAn = null; out.innerHTML = ''; say(''); }
+    else if (act === 'wa-example') { $('waText').value = ['12/10/2026, 09:12 - Sarah (Melbourne): Hi Raymond, got the quote for the 40HQ to Melbourne, thanks.', '12/10/2026, 09:13 - Sarah (Melbourne): But honestly it is a bit too expensive compared to another forwarder who quoted me 2,150 all in.', '12/10/2026, 09:20 - RAYMOND: Thanks Sarah, let me break it down for you.', '12/10/2026, 10:02 - Sarah (Melbourne): Also, last shipment was delayed 6 days and my customer was not happy. I need to be sure about the transit time this time.', '13/10/2026, 08:30 - Sarah (Melbourne): Can you do better on the price? If the price works we can place the order this week, we have 3 more shipments this quarter.'].join(String.fromCharCode(10)); run(); }
+    else if (act === 'wa-screen' || act === 'wa-pasteimg') {
+      if (act === 'wa-screen') {
+        say('正在抓取屏幕并识别…');
+        try { const r = await fetch('api/wa/screen', { method: 'POST' }); const j = await r.json(); if (!j.ok) throw new Error(j.error || '失败'); $('waText').value = j.text; say('识别完成 ' + j.chars + ' 字符，可点「开始分析」', 'ok'); } catch (er) { say('抓屏识别不可用（需本地服务端）：' + er.message, 'err'); }
+      } else say('请先按 Win+Shift+S 截图，然后在本页按 Ctrl+V');
+    }
+    else if (tone) { __waTone = tone; render(); }
+    else if (cp != null && window.__waRep) { try { await navigator.clipboard.writeText(window.__waRep.parts[Number(cp)].en); say('已复制该段英文', 'ok'); } catch (er) { say('复制失败，请手动选择', 'err'); } }
+    else if (act === 'wa-copyall' && window.__waRep) { try { await navigator.clipboard.writeText(window.__waRep.fullEn); say('已复制英文全文', 'ok'); } catch (er) { say('复制失败', 'err'); } }
+    else if (mi != null) { const i = Number(mi); if (__waMsgs[i]) { __waMsgs[i].who = __waMsgs[i].who === 'them' ? 'me' : 'them'; __waAn = E.analyze(__waMsgs); render(); say('已切换第 ' + (i + 1) + ' 条的说话人', 'ok'); } }
+  });
+  /* 剪贴板图片 → OCR */
+  document.addEventListener('paste', async function (ev) {
+    if (!document.getElementById('waText')) return;
+    const items = (ev.clipboardData || {}).items || [];
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type && items[i].type.indexOf('image') === 0) {
+        ev.preventDefault();
+        const blob = items[i].getAsFile();
+        const fr = new FileReader();
+        fr.onload = async function () {
+          say('正在识别截图文字…');
+          try { const r = await fetch('api/wa/ocr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image: fr.result }) }); const j = await r.json(); if (!j.ok) throw new Error(j.error || '失败'); $('waText').value = j.text; say('识别完成 ' + j.chars + ' 字符，可点「开始分析」', 'ok'); } catch (er) { say('OCR 不可用（需本地服务端）：' + er.message, 'err'); }
+        };
+        fr.readAsDataURL(blob);
+        return;
+      }
+    }
+  });
+};
+
 /* ============================== 帮助 ============================== */
 App.views.help = async function () {
   const flow = Guide.steps.map(function (s) {
