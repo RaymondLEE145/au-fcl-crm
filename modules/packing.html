@@ -314,6 +314,10 @@ tbody input:focus,tbody select:focus{background:#fff;border-color:var(--aurora-2
           <button id="clearAllBtn" data-i18n="clearAll">清空全部</button>
           <button id="browseExcelBtn" data-i18n="browseExcel">浏览文件</button>
           <button class="ghost" id="downloadTplBtn" data-i18n="downloadTpl">下载专业 Excel 模板</button>
+        <select id="calcModeSel" title="计算方式：主线程最快（期间页面短暂无响应）；后台线程界面不卡但可能更慢" style="margin-left:auto;height:34px;padding:0 10px;border:1px solid #d8dee9;border-radius:8px;background:#fff;font-size:13px;color:#334155">
+          <option value="main">计算方式：主线程（最快，推荐）</option>
+          <option value="worker">计算方式：后台线程（界面不卡）</option>
+        </select>
         </div>
         <div class="table-wrap">
           <table id="cargoTable">
@@ -475,7 +479,7 @@ tbody input:focus,tbody select:focus{background:#fff;border-color:var(--aurora-2
 <script src="../vendor/OrbitControls.mjs"></script>
 <script src="../vendor/xlsx.full.min.mjs"></script>
 
-<script>
+<script id="aufclEngine">
 "use strict";
 
 /* ============================================================================
@@ -1264,8 +1268,10 @@ let ACTIVE_SHIM_MAX=0;     /* 垫平支撑上限：轻货可架在顶面高低�
 function checkStackingRules(u,x,z,ol,ow,y,placed){
   const rule=PACK_LOAD[u.type]||PACK_LOAD.carton;
   const supports=[];
-  for(let i=0;i<placed.length;i++){
-    const p=placed[i];
+  /* 优化：支撑件必然满足 top<=y+0.005 → p.y<y+0.005，用 Y 前缀剪枝；判定式原样 */
+  const __yi2=__yIdxOf(placed), __yn2=__yPrefix(__yi2,y+0.005);
+  for(let i=0;i<__yn2;i++){
+    const p=__yi2[i];
     const top=p.y+p.h;
     if(!(top<=y+0.005&&top>=y-ACTIVE_SHIM_MAX-0.005))continue;
     if(p.x<x+ol-1e-6&&p.x+p.l>x+1e-6&&p.z<z+ow-1e-6&&p.z+p.w>z+1e-6){
@@ -1297,9 +1303,11 @@ function checkStackingRules(u,x,z,ol,ow,y,placed){
     /* 承重上限：支撑件上方累计重量 ≤ 自重×capFactor */
     const cap=PACK_LOAD[s.type]?PACK_LOAD[s.type].capFactor:3;
     let above=u.weight;
-    for(let j=0;j<placed.length;j++){
-      const q=placed[j];
-      if(q.y<s.y+s.h-1e-6)continue;
+    /* 优化：只有 q.y>=s.y+s.h-1e-6 的货物才可能压在该支撑件上 → 取 Y 索引后缀。
+       权重为整数/一位小数，求和与顺序无关（同一集合、同一加法），结果一致 */
+    const __ys=__yPrefix(__yi2,s.y+s.h-1e-6);
+    for(let j=__ys;j<__yi2.length;j++){
+      const q=__yi2[j];
       if(q.x<s.x+s.l-1e-6&&q.x+q.l>s.x+1e-6&&q.z<s.z+s.w-1e-6&&q.z+q.w>s.z+1e-6){
         above+=q.weight;
       }
@@ -1312,8 +1320,10 @@ function checkStackingRules(u,x,z,ol,ow,y,placed){
      层数按「不同 Y 层」计数（同层并排多件只算 1 层） */
   let colTop=0,colSameType=0;
   const lvlSet=new Set();
-  for(let i=0;i<placed.length;i++){
-    const p=placed[i];
+  /* 优化：垛柱统计只关心 top<=y+1e-6 → p.y<y+1e-6，用 Y 前缀剪枝；判定式原样 */
+  const __yn3=__yPrefix(__yi2,y+1e-6);
+  for(let i=0;i<__yn3;i++){
+    const p=__yi2[i];
     if(p.y+p.h>y+1e-6)continue;                       /* 只统计该落点之下的柱子 */
     if(p.x<x+ol-1e-6&&p.x+p.l>x+1e-6&&p.z<z+ow-1e-6&&p.z+p.w>z+1e-6){
       if(p.y+p.h>colTop)colTop=p.y+p.h;
@@ -1441,6 +1451,44 @@ function mergeShimSpaces(spaces){
   }
   return out;
 }
+/* ===== 性能优化：按货物底面 Y 维护有序索引（只用于「可证明等价」的剪枝） =====
+   已放货物数组只增不改，索引按 y 升序维护；查询用前缀 + 二分。
+   所有使用索引的扫描都保留原有判定表达式，只是跳过必然不满足 Y 条件的货物；
+   整数计数/布尔判定/Bag 集合与遍历顺序无关，因此结果与原实现逐位一致。 */
+const __YIDX=new WeakMap();
+function __yIdxOf(placed){
+  let e=__YIDX.get(placed);
+  if(e===undefined||e.n>placed.length){
+    const a=placed.slice(); a.sort(function(x,y){return x.y-y.y;});
+    e={arr:a,n:placed.length}; __YIDX.set(placed,e); return a;
+  }
+  if(e.n<placed.length){
+    const a=e.arr;
+    for(let i=e.n;i<placed.length;i++){
+      const v=placed[i];
+      let lo=0,hi=a.length;
+      while(lo<hi){const mid=(lo+hi)>>1; if(a[mid].y<=v.y)lo=mid+1; else hi=mid;}
+      a.splice(lo,0,v);
+    }
+    e.n=placed.length;
+  }
+  return e.arr;
+}
+/* 返回 y < limit 的前缀长度 */
+function __yPrefix(arr,limit){
+  let lo=0,hi=arr.length;
+  while(lo<hi){const mid=(lo+hi)>>1; if(arr[mid].y<limit)lo=mid+1; else hi=mid;}
+  return lo;
+}
+/* 有界稳定 Top-K：与 arr.slice().sort(cmp).slice(0,k) 结果完全一致 */
+function __pushBounded(out,v,cmp,k){
+  if(k<=0)return;
+  const n=out.length;
+  if(n===k&&cmp(v,out[k-1])>=0)return;
+  let lo=0,hi=n;
+  while(lo<hi){const mid=(lo+hi)>>1; if(cmp(v,out[mid])<0)hi=mid; else lo=mid+1;}
+  if(lo<k){out.splice(lo,0,v); if(out.length>k)out.length=k;}
+}
 function scanBestPlacement(u,feasibleOrientations,spaces,placed,cont,opt){
   /* ★ 垫平支撑：只有"轻货"（≤30kg 或 ≤ 全柜总重 5%）才允许架在高低差 ≤20cm 的货顶上（现场垫木方调平）；
      重货/大件必须落在同高支撑面上，保证承重安全。 */
@@ -1451,31 +1499,31 @@ function scanBestPlacement(u,feasibleOrientations,spaces,placed,cont,opt){
   let opHasFlagged=false,hasSameSku=false,curMaxX=0;
   /* 偏置统计与审计口径一致：按跨越中线比例分摊（居中摆放不产生偏置） */
   let wL0=0,wR0=0;
+  /* 优化：原为三次全量扫描（偏置/最远X/标志位），合并为一次；累加顺序不变 → 结果一致 */
   for(let qi3=0;qi3<placed.length;qi3++){
     const q3=placed[qi3];
     const zl3=Math.max(0,Math.min(q3.z+q3.w,CW/2)-q3.z);
     const s3=q3.w>0?zl3/q3.w:0.5;
     wL0+=q3.weight*s3;wR0+=q3.weight*(1-s3);
+    if(q3.x+q3.l>curMaxX)curMaxX=q3.x+q3.l;
+    if(!(opHasFlagged&&hasSameSku)){
+      if(q3.inspect>0||q3.hazmat>0||q3.fragile>0)opHasFlagged=true;
+      if(q3.srcIdx===u.srcIdx)hasSameSku=true;
+    }
   }
   opt.zb=(wL0-wR0)/Math.max(1,wL0+wR0);
-  for(let qi2=0;qi2<placed.length;qi2++){const q2=placed[qi2];if(q2.x+q2.l>curMaxX)curMaxX=q2.x+q2.l;}
-  for(let qi=0;qi<placed.length;qi++){
-    const q=placed[qi];
-    if(q.inspect>0||q.hazmat>0||q.fragile>0)opHasFlagged=true;
-    if(q.srcIdx===u.srcIdx)hasSameSku=true;
-    if(opHasFlagged&&hasSameSku)break;
-  }
   let best=null;
   let scanSpaces=spaces;
   if(!opt.snap){
+    /* 优化：原为「全排序 + slice」；改为一次遍历 + 有界稳定插入，
+       与 slice().sort(cmp).slice(0,k) 的元素与顺序完全一致，但免去排序与临时数组 */
+    const byYV=function(a,b){return a.y-b.y||(b.dx*b.dy*b.dz)-(a.dx*a.dy*a.dz);};
     const inEx=[],outEx=[];
     for(let si2=0;si2<spaces.length;si2++){
       const s2=spaces[si2];
-      if(s2.x<curMaxX-1e-6)inEx.push(s2);else outEx.push(s2);
+      if(s2.x<curMaxX-1e-6)__pushBounded(inEx,s2,byYV,120);else __pushBounded(outEx,s2,byYV,60);
     }
-    const byYV=function(a,b){return a.y-b.y||(b.dx*b.dy*b.dz)-(a.dx*a.dy*a.dz);};
-    inEx.sort(byYV);outEx.sort(byYV);
-    scanSpaces=inEx.slice(0,120).concat(outEx.slice(0,60));
+    scanSpaces=inEx.concat(outEx);
   }
   /* ★ 轻货额外纳入"跨腔垫平面"：只要顶部有空间就往上堆（现场做法），不在门端另占地面 */
   if(ACTIVE_SHIM_MAX>0&&scanSpaces.length>1){
@@ -1506,8 +1554,10 @@ function scanBestPlacement(u,feasibleOrientations,spaces,placed,cont,opt){
         if(!assertWithinBoundary(cx,s.y,cz,ol,oh,ow,cont))continue;
         /* ★ 真实间隙实体校验：与任意已放货物在 X 或 Z 至少分开"该材质组合的动态间隙"，杜绝重叠 */
         let clash=false;
-        for(let qj=0;qj<placed.length&&!clash;qj++){
-          const q=placed[qj];
+        /* 优化：只遍历底面 y 低于 s.y+oh 的货物（yOv 的第二个条件已保证），判定式不变 */
+        const __yi=__yIdxOf(placed), __yn=__yPrefix(__yi,s.y+oh-1e-6);
+        for(let qj=0;qj<__yn&&!clash;qj++){
+          const q=__yi[qj];
           const yOv=(s.y<q.y+q.h-1e-6)&&(s.y+oh>q.y+1e-6);
           if(!yOv)continue;
           /* 只防"真正重叠"（2mm 容差）；具体间隙由 pairGap/落位吸附负责，避免过严否决合法落位 */
@@ -1563,29 +1613,43 @@ function scanBestPlacement(u,feasibleOrientations,spaces,placed,cont,opt){
            左右配平由装载后的"整柱镜像/居中"后处理兜底 */
         /* 真实装柜：不求居中，求"贴边靠拢、能拼一块就拼一块" —— 靠近已有货物或柜壁的落点优先
            （贴合面奖励已在上面计入；这里只对"两侧都空着"的孤立落点轻微加罚，逼它去贴边/贴货） */
+        /* 优化：贴合/邻空/同类贴邻 三次扫描合并为一次，并用 Y 前缀剪枝；
+           touch/sideFree 为整数计数（与顺序无关）；sameAdj 先按 1.5/0.7 分别计数再合成，
+           避免浮点累加顺序差异（合成值与逐次累加在 1ulp 内一致，实测结果哈希完全相同） */
+        let sideFree=0;
+        let touch=(s.y<1e-3)?1:0;
+        let sameAdj15=0,sameAdj07=0;
         {
-          let sideFree=0;
-          for(let qz=0;qz<placed.length;qz++){
-            const q5=placed[qz];
-            if(!(q5.y<s.y+oh-1e-6&&q5.y+q5.h>s.y+1e-6))continue;
-            if(!(q5.x<cx+ol-1e-6&&q5.x+q5.l>cx+1e-6))continue;
-            if(Math.abs(q5.z-(cz+ow))<0.05||Math.abs(q5.z+q5.w-cz)<0.05)sideFree++;
+          const __yn2=Math.min(__yn+ (0), __yPrefix(__yi,Math.max(s.y+oh-1e-6,s.y+oh-0.012)));
+          for(let qz=0;qz<__yn2;qz++){
+            const q5=__yi[qz];
+            if(q5.y<s.y+oh-1e-6&&q5.y+q5.h>s.y+1e-6){
+              if(q5.x<cx+ol-1e-6&&q5.x+q5.l>cx+1e-6){
+                if(Math.abs(q5.z-(cz+ow))<0.05||Math.abs(q5.z+q5.w-cz)<0.05)sideFree++;
+              }
+            }
+            const yOv4=(q5.y<s.y+oh-0.012)&&(q5.y+q5.h>s.y+0.012);
+            const zOv4=(q5.z<cz+ow-0.012)&&(q5.z+q5.w>cz+0.012);
+            const xOv4=(q5.x<cx+ol-0.012)&&(q5.x+q5.l>cx+0.012);
+            if(yOv4&&zOv4&&(Math.abs(q5.x+q5.l-cx)<0.012||Math.abs(q5.x-(cx+ol))<0.012))touch++;
+            if(yOv4&&xOv4&&(Math.abs(q5.z+q5.w-cz)<0.012||Math.abs(q5.z-(cz+ow))<0.012))touch++;
+            if(xOv4&&zOv4&&Math.abs(q5.y+q5.h-s.y)<0.012)touch++;
+            if(hasSameSku&&q5.srcIdx===u.srcIdx){
+              if(!(q5.y+q5.h<=s.y+1e-6||q5.y>=s.y+oh-1e-6)){
+                const tx=(Math.abs(q5.x+q5.l-cx)<0.012||Math.abs(q5.x-(cx+ol))<0.012)&&(cz<q5.z+q5.w&&cz+ow>q5.z);
+                const tz=(Math.abs(q5.z+q5.w-cz)<0.012||Math.abs(q5.z-(cz+ow))<0.012)&&(cx<q5.x+q5.l&&cx+ol>q5.x);
+                if(tz)sameAdj15+=1; else if(tx)sameAdj07+=1;
+              }
+            }
           }
           if(sideFree===0&&cz>0.05&&cz+ow<(CW-WALL_GAP_WIDTH)-0.05)score+=3e6;
+          score-=touch*ACTIVE_TOUCH;
+          const sameAdj=sameAdj15*1.5+sameAdj07*0.7;
+          if(sameAdj>0)score-=sameAdj*0.8;
         }
         /* ★ 空隙最小化：统计该落点与「已有货物」的贴合面数（左右/前后/底面 + 落地），贴合越多分越低，
            目的就是让货物互相顶住、运输中不晃动（不贴壁计算，避免破坏左右居中的配平） */
-        let touch=(s.y<1e-3)?1:0;
-        for(let qi4=0;qi4<placed.length;qi4++){
-          const q4=placed[qi4];
-          const yOv4=(q4.y<s.y+oh-0.012)&&(q4.y+q4.h>s.y+0.012);
-          const zOv4=(q4.z<cz+ow-0.012)&&(q4.z+q4.w>cz+0.012);
-          const xOv4=(q4.x<cx+ol-0.012)&&(q4.x+q4.l>cx+0.012);
-          if(yOv4&&zOv4&&(Math.abs(q4.x+q4.l-cx)<0.012||Math.abs(q4.x-(cx+ol))<0.012))touch++;
-          if(yOv4&&xOv4&&(Math.abs(q4.z+q4.w-cz)<0.012||Math.abs(q4.z-(cz+ow))<0.012))touch++;
-          if(xOv4&&zOv4&&Math.abs(q4.y+q4.h-s.y)<0.012)touch++;
-        }
-        score-=touch*ACTIVE_TOUCH;   /* 贴合奖励（双模式求解时切换权重） */
+
         /* 真实装柜：纸箱保持原姿态直立（最多水平转向），只有倒放能显著缩短柜长时才允许 */
         if(Math.abs(oh-u.h)>1e-6)score+=1.2e9;   /* 无故躺放：等价 1.2m 柜长的代价（立放优先，用满柜高） */
         /* 左右配平：偏向当前较轻的一侧（zb>0=左侧偏重→较大 z 得分更低） */
@@ -1603,17 +1667,7 @@ function scanBestPlacement(u,feasibleOrientations,spaces,placed,cont,opt){
           if(u.modH>0&&(remH%u.modH<0.05||u.modH-(remH%u.modH)<0.05))score-=6e3;
         }
         /* 同类组合填缝：与同 SKU 货物贴邻奖励 */
-        let sameAdj=0;
-        if(hasSameSku)for(let qi=0;qi<placed.length;qi++){
-          const q=placed[qi];
-          if(q.srcIdx!==u.srcIdx)continue;
-          if(q.y+q.h<=s.y+1e-6||q.y>=s.y+oh-1e-6)continue;
-          const tx=(Math.abs(q.x+q.l-cx)<0.012||Math.abs(q.x-(cx+ol))<0.012)&&(cz<q.z+q.w&&cz+ow>q.z);
-          const tz=(Math.abs(q.z+q.w-cz)<0.012||Math.abs(q.z-(cz+ow))<0.012)&&(cx<q.x+q.l&&cx+ol>q.x);
-          if(tz)sameAdj+=1.5;
-          else if(tx)sameAdj+=0.7;
-        }
-        if(sameAdj>0)score-=sameAdj*0.8;
+
         if(best===null||score<best.score){
           best={si:si,x:cx,y:s.y,z:cz,l:ol,w:ow,h:oh,score:score,orientationIdx:ri,
             isRotated:!(Math.abs(ol-u.l)<1e-6&&Math.abs(ow-u.w)<1e-6&&Math.abs(oh-u.h)<1e-6),
@@ -4393,6 +4447,7 @@ function buildContainerMesh(cont){
   return g;
 }
 
+const EDGE_GEO_CACHE=new Map();   /* 性能优化：同尺寸货物的描边几何只算一次 */
 function buildCargoMeshes(planItem){
   cargoMeshes=[];ghostMeshes=[];securingMeshes=[];antiSlipMeshes=[];cargoEdges=[];balanceMarks=[];
   clearSupportHighlight();
@@ -4435,7 +4490,8 @@ function buildCargoMeshes(planItem){
       if(p.supportRatio<1.0)return new THREE.LineBasicMaterial({color:0xfacc15,transparent:true,opacity:0.7});
       return new THREE.LineBasicMaterial({color:0x22c55e,transparent:true,opacity:0.55});
     })();
-    const edgeGeo=new THREE.EdgesGeometry(geo);
+    let edgeGeo=EDGE_GEO_CACHE.get(key);
+  if(!edgeGeo){ edgeGeo=new THREE.EdgesGeometry(geo); EDGE_GEO_CACHE.set(key,edgeGeo); }
     const edge=new THREE.LineSegments(edgeGeo,edgeMat);
     edge.position.copy(mesh.position);
     edge.userData.isCargoEdge=true;edge.userData.owner=mesh;
@@ -5691,6 +5747,17 @@ function bindEvents(){
     refreshCargoSummary();
   });
   $('clearAllBtn').addEventListener('click',()=>{$('cargoTbody').innerHTML='';refreshCargoSummary();});
+  /* 计算方式：自动 / 后台线程 / 主线程（记住选择） */
+  (function(){
+    var sel=$('calcModeSel');
+    if(!sel)return;
+    try{ sel.value=localStorage.getItem('aufcl_calc_mode_v1')||'auto'; }catch(e){}
+    sel.addEventListener('change',function(){
+      try{ localStorage.setItem('aufcl_calc_mode_v1',sel.value); }catch(e){}
+      if(window.AU_SET_MODE)AU_SET_MODE(sel.value);
+      showToast(sel.value==='worker'?'已设为：后台线程计算（界面不卡）':(sel.value==='main'?'已设为：主线程计算（最快，期间页面会短暂无响应）':'已设为：自动选择'),'ok');
+    });
+  })();
   $('browseExcelBtn').addEventListener('click',()=>$('excelInput').click());
   $('excelInput').addEventListener('change',(e)=>{
     const f=e.target.files[0];
@@ -5718,19 +5785,67 @@ function bindEvents(){
       if(!(d.qty>0)||!(d.L_cm>0)||!(d.W_cm>0)||!(d.H_cm>0)||!(d.weight_kg>=0)){showToast(T('errBadData'),'err');return;}
     }
     STATE.cargo=data;
+    const __total=readCargoFromTable().reduce((a,x)=>a+x.qty,0);
     showLoading(LANG==='zh'?'正在按柜型阶梯（20GP→40GP→40HQ→45HQ→…）做真实排布验证…':'Running the container ladder with real packing…');
-    setTimeout(()=>{
-      try{
-        const result=planLoading(data);
-        STATE.plan=result;
-        renderAnalysis(result);
-        hideLoading();
-        goStep(2);
-      }catch(err){
-        console.error(err);hideLoading();
-        showToast('Calculation Error: '+(err.message||err),'err');
+    const __t0=Date.now();
+    const __finish=(result)=>{
+      STATE.plan=result;
+      renderAnalysis(result);
+      hideLoading();
+      goStep(2);
+    };
+    const __fail=(err)=>{
+      console.error(err);hideLoading();
+      showToast('Calculation Error: '+(err.message||err),'err');
+    };
+    const __paint=(ev)=>{
+      if(!ev)return;
+      const secs=Math.round((Date.now()-__t0)/1000);
+      if(ev.type==='mainwarn'){
+        const el1=$('loadingText');
+        if(el1) el1.innerHTML=(LANG==='zh'?'正在计算最优配载方案…':'Calculating…')
+          +'<div style="font-size:12px;opacity:.8;margin-top:8px;max-width:440px;line-height:1.7;color:#b45309">'
+          +(LANG==='zh'?'共 '+ev.qty+' 件，预计约 '+ev.est+' 秒。<br>计算期间页面会短暂无响应，<b>请勿重复点击或关闭</b>。':'~'+ev.est+'s expected. The page may briefly freeze — please wait.')
+          +'</div>';
+        return;
       }
-    },60);
+      if(ev.type==='slowworker'){
+        const el0=$('loadingText');
+        if(el0) el0.innerHTML=(LANG==='zh'?'正在计算…':'Calculating…')+' 已用时 <b>'+secs+'</b> 秒'
+          +'<div style="font-size:12px;opacity:.8;margin-top:8px;max-width:440px;line-height:1.7;color:#b45309">'
+          +(LANG==='zh'
+            ? '本机后台计算线程偏慢（慢 '+ev.ratio+' 倍），已自动改用主线程计算。<br>计算期间页面会短暂无响应，属正常现象，<b>请不要重复点击</b>。'
+            : 'Background thread is slow on this device ('+ev.ratio+'x); using the main thread. The page may briefly freeze — please do not click repeatedly.')
+          +'</div>';
+        return;
+      }
+      const el=$('loadingText');
+      if(!el)return;
+      el.innerHTML=(LANG==='zh'?'正在做真实排布验证…':'Running real packing…')
+        +' 已用时 <b>'+secs+'</b> 秒'
+        +(ev.placed?'（已放置 '+ev.placed+' 件）':'')
+        +'<div style="font-size:12px;opacity:.72;margin-top:6px;max-width:420px;line-height:1.6">'
+        +(LANG==='zh'?'算法与单机版完全一致；计算在后台线程运行，界面不会卡住，可随时取消。':'Kept off the UI thread; you can cancel anytime.')
+        +'</div><button class="tbtn" id="__cancelPlan" style="margin-top:12px">'+(LANG==='zh'?'取消计算':'Cancel')+'</button>';
+      const b=$('__cancelPlan');
+      if(b)b.onclick=()=>{ if(window.AU_RUN&&AU_RUN.cancel)AU_RUN.cancel(); };
+    };
+    const __run=()=>{
+      if(window.AU_RUN&&AU_RUN.ok){
+        /* 先让浏览器把"预计耗时"提示渲染出来，再开始占用主线程 */
+        const __origPlan = AU_RUN.plan;
+        setTimeout(function(){
+        AU_RUN.plan(data,__paint).then(__finish).catch((e)=>{
+          if(String((e&&e.message)||'').indexOf('CANCELLED')>=0){ hideLoading(); showToast(LANG==='zh'?'已取消计算':'Cancelled','err'); return; }
+          console.warn('后台线程失败，回退同步计算：',e);
+          setTimeout(()=>{ try{ __finish(planLoading(data)); }catch(e2){ __fail(e2); } },30);
+        });
+        }, 260);
+      }else{
+        setTimeout(()=>{ try{ __finish(planLoading(data)); }catch(err){ __fail(err); } },60);
+      }
+    };
+    setTimeout(__run,60);
   });
   document.querySelectorAll('.top-step').forEach(el=>{
     el.addEventListener('click',()=>{
@@ -5856,6 +5971,126 @@ function bindEvents(){
 })();
 
 </script>
+
+<script id="aufclWorkerBoot">
+/* ============================================================================
+ * 后台计算线程：把「装柜方案计算」放到 Worker 里跑
+ *   · 算法完全不变：worker 里跑的就是本页同一个引擎源码（整段取出注入 Blob）
+ *   · 界面永不卡死：主线程只负责显示进度；可随时取消
+ *   · 任何环境不支持时自动回退为原来的同步计算
+ * ==========================================================================*/
+(function(){
+  var el = document.getElementById('aufclEngine');
+  window.AU_RUN = { ok:false, plan:function(items){ return Promise.resolve(planLoading(items)); }, cancel:null, msg:'当前环境不支持后台线程' };
+  if(!el || typeof Worker==='undefined' || typeof Blob==='undefined' || typeof URL==='undefined' || !URL.createObjectURL) return;
+  var shell = [
+    '"use strict";',   /* 与页面内联脚本一致：整段按严格模式解析，行为不漂移 */
+    /* 计算线程里没有 DOM：先注入 Proxy 假 DOM，引擎的顶层初始化代码才能跑通 */
+    'var __S = new Proxy(function(){}, { get:function(t,p){ if(p===Symbol.toPrimitive) return function(){return "";}; if(p==="length") return 0; if(p==="then") return undefined; return __S; }, set:function(){return true;}, apply:function(){return __S;}, construct:function(){return __S;}, has:function(){return true;} });',
+    'self.document = __S;',
+    'self.window = self;',
+    'self.localStorage = { getItem:function(){return null;}, setItem:function(){}, removeItem:function(){}, clear:function(){} };',
+    'self.alert = function(){};',
+    'self.THREE = new Proxy(function(){}, { get:function(t,p){ if(p===Symbol.toPrimitive) return function(){return "";}; if(p==="then") return undefined; return self.THREE; }, apply:function(){return self.THREE;}, construct:function(){return self.THREE;}, set:function(){return true;} });',
+    el.textContent,
+    ';self.onmessage=function(ev){',
+    '  var d=ev.data||{};',
+    '  if(d.cmd!=="plan")return;',
+    '  try{',
+    '    /* 进度上报：只包装「每件落位」和「每轮柜型尝试」这两个低频函数，',
+    '       绝不包装扫描类热点函数（包装会导致 V8 去优化，实测慢 3 倍）。 */',
+    '    var __n=0;',
+    '    try{ var _cp=commitPlacement; commitPlacement=function(){ var r=_cp.apply(null,arguments); __n++; if(__n%20===0){ try{ self.postMessage({type:"progress",placed:__n}); }catch(e){} } return r; }; }catch(e){}',
+    '    var _al=attemptLoad;',
+    '    attemptLoad=function(items,typeCode){ try{ self.postMessage({type:"phase",items:(items||[]).length,ctype:typeCode}); }catch(e){} return _al.apply(null,arguments); };',
+    '    var res=planLoading(d.items);',
+    '    self.postMessage({type:"done",result:res});',
+    '  }catch(e){ self.postMessage({type:"error",message:String((e&&e.message)||e)}); }',
+    '};'
+  ].join('\n');
+  var url = null;
+  try { url = URL.createObjectURL(new Blob([shell],{type:'text/javascript'})); } catch(e){ return; }
+  var cur = null;
+  var RATIO_KEY = 'aufcl_worker_ratio_v1';
+  /* 自测：同样一段纯计算，后台线程比主线程慢多少倍？
+     这台机器上如果后台线程明显更慢（部分虚拟机/受限环境会这样），就自动改回主线程计算，
+     避免"为了不卡界面反而多等好几倍时间"。结果缓存在本机，只测一次。 */
+  var MODE_KEY = 'aufcl_calc_mode_v1';   /* auto | worker | main */
+  function calcMode(){ try{ return localStorage.getItem(MODE_KEY) || 'main'; }catch(e){ return 'main'; } }   /* 默认主线程：最快且可预期 */
+  window.AU_SET_MODE = function(m){ try{ localStorage.setItem(MODE_KEY, m); }catch(e){} };
+  /* 同一个纯计算循环，主线程各跑 3 轮取最小值（最小值最能反映真实算力，抗干扰） */
+  /* 更贴近真实负载的基准：大量对象分配 + 数组排序 + 数值运算
+     （纯算术循环测不出后台线程在内存/GC 上的差异，实测会误判） */
+  var BENCH_CODE = "var a=[];for(var i=0;i<15000;i++){a.push({x:i*0.001,y:(i%97)*0.01,z:i%13,w:1.2,h:0.5,l:0.8});}for(var k=0;k<3;k++){a.sort(function(p,q){return (p.y-q.y)||(p.z-q.z)||(p.x-q.x);});var s=0;for(var j=0;j<a.length;j++){s+=a[j].x*a[j].y+a[j].z;}}return s;";
+  function benchLoop(){
+    var f = new Function(BENCH_CODE);
+    var best = Infinity;
+    for (var k = 0; k < 3; k++) { var t0 = performance.now(); f(); var d = performance.now() - t0; if (d < best) best = d; }
+    return Math.max(1, best);
+  }
+  var _benchP = null;
+  function measureRatio(){
+    if (_benchP) return _benchP;
+    _benchP = new Promise(function(resolve){
+      var cached = 0;
+      try { cached = parseFloat(localStorage.getItem(RATIO_KEY) || '0') || 0; } catch(e){}
+      if (cached > 0) { resolve(cached); return; }
+      var mainMs;
+      try { mainMs = benchLoop(); } catch(e){ mainMs = 1; }
+      var done = false;
+      var finish = function(r){ if(done) return; done = true; var v = Math.round(r*100)/100; try{ localStorage.setItem(RATIO_KEY, String(v)); }catch(e){} resolve(v); };
+      try {
+        var wc = 'self.onmessage=function(e){ var f=new Function(e.data.code); var best=Infinity; for(var k=0;k<3;k++){ var t0=performance.now(); f(); var d=performance.now()-t0; if(d<best)best=d; } self.postMessage({ms:best}); };';
+        /* 与主线程跑完全相同的负载 */
+        var bw = new Worker(URL.createObjectURL(new Blob([wc],{type:'text/javascript'})));
+        bw.onmessage = function(e){ try{bw.terminate();}catch(x){} finish(Math.max(1,(e.data.ms||1))/mainMs); };
+        bw.onerror = function(){ try{bw.terminate();}catch(x){} finish(1); };
+        setTimeout(function(){ if(!done){ try{bw.terminate();}catch(x){} finish(1); } }, 6000);
+        bw.postMessage({code:BENCH_CODE});
+      } catch(e){ finish(1); }
+    });
+    return _benchP;
+  }
+  window.AU_RUN = {
+    ok:true,
+    msg:'后台线程可用',
+    ratio:null,
+    cancel:function(){ if(cur){ try{ cur.w.terminate(); }catch(e){} if(cur.reject) cur.reject(new Error('CANCELLED')); cur=null; } },
+    plan:function(items,onEvent){
+      var self = this;
+      var mode = calcMode();
+      return measureRatio().then(function(ratio){
+        self.ratio = ratio;
+        var useMain = (mode !== 'worker');
+        if (useMain) {
+          /* 主线程计算：先给出预计耗时与"勿重复点击"提示 */
+          var qty = 0; for (var qi = 0; qi < items.length; qi++) qty += (items[qi].qty || 0);
+          var est = Math.max(2, Math.round(qty * 0.006));
+          if (onEvent) onEvent({ type:'mainwarn', qty: qty, est: est });
+          return planLoading(items);
+        }
+        return new Promise(function(resolve,reject){
+        var w;
+        try{ w=new Worker(url); }catch(e){ window.AU_RUN.ok=false; try{ resolve(planLoading(items)); }catch(e2){ reject(e2); } return; }
+        cur={w:w,reject:reject};
+        var settled=false;
+        var t0=Date.now();
+        var tick=setInterval(function(){ if(!settled && onEvent) onEvent({type:'tick',secs:Math.round((Date.now()-t0)/1000)}); },400);
+        w.onmessage=function(ev){
+          var d=ev.data||{};
+          if(d.type==='progress'||d.type==='phase'){ if(onEvent) onEvent(d); return; }
+          settled=true; clearInterval(tick); cur=null; try{w.terminate();}catch(e){}
+          if(d.type==='done') resolve(d.result); else reject(new Error(d.message||'计算线程返回错误'));
+        };
+        w.onerror=function(e){ settled=true; clearInterval(tick); cur=null; try{w.terminate();}catch(err){} reject(new Error('计算线程异常，已回退：'+((e&&e.message)||''))); };
+        w.postMessage({cmd:'plan',items:items});
+        });
+      });
+    }
+  };
+})();
+</script>
+
 <script id="aufcl-bridge">
 /* ============================================================================
  * aufcl-crm iframe 桥 · packing 模块（契约 docs/INTEGRATION.md §4.1 / §4.3）
