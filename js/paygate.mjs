@@ -49,49 +49,63 @@
     inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
     inp.value = (function () { try { var q = new URLSearchParams(location.search).get('code'); return q || ''; } catch (e) { return ''; } })();
   }
-  /* ---- 请求放行（全栈/局域网模式） ---- */
+  /* ---- 请求放行：实时通道（手机可收到推送）+ 本机服务端 ---- */
+  function grantFromApproval(m) {
+    var v = m && m.code ? P.verifyCode(m.code) : { ok: false };
+    if (v.ok) { P.issue(v.hours, 'approve', m.code); enter('approve'); return true; }
+    if (m && m.exp && m.exp > Date.now()) { P.issue(Math.round((m.exp - Date.now()) / 3600000 * 10) / 10 || P.HOURS, 'approve', ''); enter('approve'); return true; }
+    return false;
+  }
   function bindRequest() {
     var b = $('payReqBtn');
     if (!b) return;
     b.addEventListener('click', function () {
-      msg('正在提交放行请求…', '');
-      var pend = P.getPending();
-      var body = { note: (pend && pend.note) || '' };
-      fetch('api/pay/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-        .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
-        .then(function (res) {
-          if (!res.ok || !res.j || res.j.ok === false) throw new Error((res.j && res.j.error) || '服务端未就绪');
-          var id = res.j.id;
-          P.setPending({ id: id, at: Date.now() });
-          msg('请求已提交（单号 ' + id + '）· 请把付款截图发给我，确认到账后立即放行…', '');
-          startPoll(id);
+      var R = window.PayRelay;
+      var id = 'P' + Date.now().toString(36).toUpperCase();
+      P.setPending({ id: id, at: Date.now() });
+      msg('正在把放行请求发送到业主手机…', '');
+      if (!R) { msg('实时通道未加载，请把付款截图发给业主换取授权码。', 'err'); return; }
+      R.publish({ t: 'req', id: id, at: Date.now(), amt: 6.66 }, { title: '💰 新的付款放行请求 ' + id, priority: 'high', tags: 'moneybag' })
+        .then(function () {
+          msg('✅ 请求已推送到业主手机（单号 ' + id + '）· 业主确认到账后自动进入，请稍候…', 'ok');
         })
         .catch(function (e) {
-          msg('当前是「在线静态版」，无法实时接收你的请求 → 请把付款截图发我，我把授权码发你（填入上面输入框即可进入）。', 'err');
+          msg('实时通道暂时不可用（' + (e.message || e) + '）→ 请把付款截图发给业主换取授权码。', 'err');
         });
+      /* 同时尝试本机服务端（全栈模式，双保险） */
+      try {
+        R.serverOk().then(function (ok) {
+          if (!ok) return;
+          fetch('api/pay/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ note: id }) }).then(function (r) { return r.json(); }).then(function (j) { if (j && j.ok) { P.setPending({ id: j.id, relayId: id, at: Date.now() }); startPoll(j.id); } }).catch(function () { });
+        });
+      } catch (e) {}
+      waitApproval(id);
     });
   }
-  function startPoll(id) {
-    if (poll) clearInterval(poll);
+  function waitApproval(id) {
+    var R = window.PayRelay;
+    if (!R) return;
+    var handled = false;
+    var onMsg = function (m) {
+      if (handled || !m || m.id !== id) return;
+      if (m.t === 'ok') { handled = true; clearInterval(poll); grantFromApproval(m); }
+      else if (m.t === 'no') { handled = true; clearInterval(poll); P.clearPending(); msg('该请求未通过，请确认付款后重试或联系业主。', 'err'); }
+    };
+    try { R.watch(onMsg); } catch (e) {}
     var n = 0;
+    if (poll) clearInterval(poll);
     poll = setInterval(function () {
       n++;
-      fetch('api/pay/status?id=' + encodeURIComponent(id))
-        .then(function (r) { return r.json(); })
-        .then(function (j) {
-          if (j && j.status === 'approved') {
-            clearInterval(poll); poll = null;
-            if (j.code) { var v = P.verifyCode(j.code); if (v.ok) { P.issue(v.hours, 'approve', j.code); enter('approve'); return; } }
-            P.issue(P.HOURS, 'approve', ''); enter('approve');
-          } else if (j && j.status === 'rejected') {
-            clearInterval(poll); poll = null; P.clearPending();
-            msg('该请求未通过，请确认付款后重新提交或联系我方。', 'err');
-          } else {
-            msg('等待我方确认到账…（已等待 ' + (n * 3) + ' 秒）', '');
-          }
-        })
-        .catch(function () { });
+      R.poll(600).then(function (list) {
+        for (var i = 0; i < list.length; i++) onMsg(list[i]);
+        if (!handled && n % 5 === 0) msg('等待业主确认到账…（已等待 ' + (n * 3) + ' 秒，可保持本页打开）', '');
+      });
     }, 3000);
+  }
+  function startPoll(id) {
+    fetch('api/pay/status?id=' + encodeURIComponent(id)).then(function (r) { return r.json(); }).then(function (j) {
+      if (j && j.status === 'approved') grantFromApproval({ t: 'ok', id: id, code: j.code });
+    }).catch(function () { });
   }
   /* ---- 通行证：自动进入 / 到期强制退出 ---- */
   function installAuthHook() {

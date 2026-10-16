@@ -514,88 +514,110 @@ App.views.mark = async function () {
 var __payTimer = null;
 App.views.pay = async function () {
   if (__payTimer) { clearInterval(__payTimer); __payTimer = null; }
-  const KEY_STORE = 'aufcl_owner_key_v1';
-  const getKey = function () { try { return localStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; } };
-  setMain(pageHead('付费放行 · 业主端', '客户扫码付款后，在这里确认到账并一键放行（6 小时一次性通行证）',
+  if (window.__paySSE) { try { window.__paySSE.close(); } catch (e) {} window.__paySSE = null; }
+  const R = window.PayRelay, PP = window.PayPass;
+  const items = {};
+  const chNow = R ? R.ch() : '';
+  setMain(pageHead('付费放行 · 业主端', '客户扫码付款 → 你的手机实时收到申请 → 一键放行（6 小时一次性通行证）',
       '<button class="btn ghost" data-act="pay-refresh">刷新</button>') +
-    card('业主密钥', '首次使用填一次，本机记住；也可直接看启动窗口打印的密钥',
-      '<div class="form-row"><label>业主密钥</label><input id="payKey" class="input" value="' + esc(getKey()) + '" placeholder="GVPAY-XXXXXX"></div>' +
-      '<div class="btn-row"><button class="btn primary" data-act="pay-savekey">保存密钥并连接</button>' +
-      '<span class="pay-badge" id="payConn">未连接</span></div>') +
-    card('授权码生成器', '不需要服务端也能用：生成后发给付款人，他填进「扫码付费进入 → 授权码」即可',
+    card('① 在线频道（你的“在线密钥”）', '客户与你的手机靠这个频道通信；客户页面已内置同一个频道，无需客户填写',
+      '<div class="form-row"><label>频道 / 在线密钥</label><input id="payCh" class="input" value="' + esc(chNow) + '" style="max-width:340px"></div>' +
+      '<div class="btn-row"><button class="btn primary" data-act="pay-savech">保存并订阅</button>' +
+      '<button class="btn ghost" data-act="pay-copych">复制频道</button>' +
+      '<button class="btn ghost" data-act="pay-custlink">复制客户链接（含频道）</button>' +
+      '<span class="pay-badge" id="payChState">订阅中…</span></div>' +
+      '<div class="pay-note" style="text-align:left">客户页链接：<code id="payCustUrl">' + esc((R ? R.pageUrl() : '').replace('#/pay', '')) + '</code></div>' +
+      '<div class="pay-note" style="text-align:left;color:#B26A00">⚠ 改频道只影响你这台设备的接收；要让客户也发到新频道，点「复制客户链接（含频道）」把带 ?ch= 的链接发给客户。</div>') +
+    card('② 手机接收申请（推荐 · 有推送）', '装一个免费 App，客户一付款申请就弹通知到你手机',
+      '<ul class="pt-list">' +
+      '<li class="pt info"><b>第 1 步：</b>手机应用商店搜 <b>ntfy</b>（iOS / Android 都有，免费）安装</li>' +
+      '<li class="pt info"><b>第 2 步：</b>App 里点「+ Subscribe to topic」，把下面这个频道名粘进去：<br><b id="payTopic2" style="font-size:15px;color:#9C7C3D">' + esc(chNow) + '</b> <button class="btn ghost tiny" data-act="pay-copytopic">复制</button></li>' +
+      '<li class="pt info"><b>第 3 步：</b>完成。以后客户点「我已支付，请求放行」，你手机立刻收到通知，<b>点通知直接打开本页</b>，一键放行。</li>' +
+      '<li class="pt warn"><b>不想装 App？</b>用手机浏览器打开本页（保持前台）也能收到：列表实时刷新 + 响铃。</li>' +
+      '<li class="pt info">网页订阅入口：<a href="https://ntfy.sh/' + esc(chNow) + '" target="_blank" rel="noopener">https://ntfy.sh/' + esc(chNow) + '</a></li>' +
+      '</ul>') +
+    card('③ 实时申请列表', '客户点「我已支付，请求放行」后立刻出现（实时通道，无需刷新）',
+      '<div id="payList"><div class="k">等待申请…</div></div>' +
+      '<div class="pay-note">放行后客户浏览器会自动进入，通行证 6 小时；到期自动退出，需再次付款。</div>') +
+    card('④ 授权码生成器（离线备用）', '客户手机收不到通知时，生成一个码发给他即可',
       '<div class="form-row"><label>有效时长（小时）</label><input id="payHours2" class="input" type="number" value="6" step="0.5" min="0.5" style="max-width:140px"></div>' +
       '<div class="btn-row"><button class="btn primary" data-act="pay-gen">生成授权码</button>' +
       '<button class="btn ghost" data-act="pay-copy">复制</button>' +
       '<button class="btn ghost" data-act="pay-gen3">连出 3 个</button></div>' +
       '<div id="payCodeOut" style="margin-top:10px;font-size:15px;font-weight:700;color:#9C7C3D;letter-spacing:.5px"></div>') +
-    card('待放行请求', '客户点「我已支付，请求放行」后会出现在这里（每 5 秒自动刷新，有新请求会响铃提示）',
-      '<div id="payList"><div class="k">加载中…</div></div>'));
-  const keyEl = document.getElementById('payKey');
+    card('⑤ 本机服务端（全栈模式 · 可选）', '跑着 server.cjs 时，申请也会同时落到本机，可用业主密钥在局域网内放行',
+      '<div class="form-row"><label>业主密钥</label><input id="payKey" class="input" value="' + esc((function () { try { return localStorage.getItem('aufcl_owner_key_v1') || ''; } catch (e) { return ''; } })()) + '" placeholder="GVPAY-XXXXXX（启动服务时窗口会打印）"></div>' +
+      '<div class="btn-row"><button class="btn ghost" data-act="pay-savekey">保存密钥</button><span class="pay-badge" id="payConn">未连接</span></div>'));
   const listEl = document.getElementById('payList');
-  const connEl = document.getElementById('payConn');
-  const load = async function () {
-    const k = String((keyEl && keyEl.value) || '').trim();
-    if (!k) { if (connEl) connEl.textContent = '请先填业主密钥'; return; }
-    try {
-      const r = await fetch('api/pay/list?key=' + encodeURIComponent(k));
-      const j = await r.json();
-      if (!r.ok || j.ok === false) { if (connEl) connEl.textContent = j.error || '密钥不正确'; if (listEl) listEl.innerHTML = '<div class="k">无法读取：' + esc(j.error || ('HTTP ' + r.status)) + '</div>'; return; }
-      if (connEl) connEl.textContent = '已连接 · 单价 ¥' + j.amount + ' · 默认 ' + j.hours + ' 小时';
-      const rows = j.list || [];
-      const pend = rows.filter(function (x) { return x.status === 'pending'; });
-      const prev = window.__paySeen || 0;
-      if (pend.length > prev) { try { beep(); } catch (e) {} if (App.toast) App.toast('有 ' + pend.length + ' 个新的付费放行请求', 'ok'); }
-      window.__paySeen = pend.length;
-      if (!rows.length) { listEl.innerHTML = '<div class="k">暂无请求</div>'; return; }
-      listEl.innerHTML = '<table class="tbl"><thead><tr><th>单号</th><th>时间</th><th>状态</th><th>授权码</th><th style="width:190px">操作</th></tr></thead><tbody>' +
-        rows.slice(0, 30).map(function (x) {
-          const st = x.status === 'approved' ? '<span style="color:#1B7F4B;font-weight:700">已放行</span>' : (x.status === 'rejected' ? '<span style="color:#B3261E">已拒绝</span>' : '<span style="color:#B26A00;font-weight:700">待确认</span>');
-          return '<tr><td>' + esc(x.id) + '</td><td>' + esc(x.atText || '') + '</td><td>' + st + '</td><td style="font-family:monospace">' + esc(x.code || '') + '</td>' +
-            '<td>' + (x.status === 'pending' ? '<button class="btn primary tiny" data-payok="' + esc(x.id) + '">确认到账 · 放行 6h</button> <button class="btn ghost tiny" data-payno="' + esc(x.id) + '">拒绝</button>' : '') + '</td></tr>';
-        }).join('') + '</tbody></table>';
-    } catch (e) { if (connEl) connEl.textContent = '连接失败（在线静态版无此接口）'; if (listEl) listEl.innerHTML = '<div class="k">当前是「在线静态版」，没有服务端放行接口。请改用上面的「授权码生成器」：生成授权码后发给付款人即可。</div>'; }
-  };
+  const chEl = document.getElementById('payCh');
+  function render() {
+    const arr = Object.keys(items).map(function (k) { return items[k]; }).sort(function (a, b) { return (b.at || 0) - (a.at || 0); });
+    if (!arr.length) { listEl.innerHTML = '<div class="k">等待申请…（客户在登录页点「我已支付，请求放行」后会立刻出现在这里）</div>'; return; }
+    listEl.innerHTML = '<table class="tbl"><thead><tr><th>单号</th><th>时间</th><th>状态</th><th>授权码</th><th style="width:200px">操作</th></tr></thead><tbody>' +
+      arr.slice(0, 40).map(function (x) {
+        const st = x.status === 'approved' ? '<span style="color:#1B7F4B;font-weight:700">已放行</span>' : (x.status === 'rejected' ? '<span style="color:#B3261E">已拒绝</span>' : '<span style="color:#B26A00;font-weight:700">待确认到账</span>');
+        return '<tr><td><b>' + esc(x.id) + '</b></td><td>' + esc(new Date(x.at || Date.now()).toLocaleTimeString()) + '</td><td>' + st + '</td><td style="font-family:monospace">' + esc(x.code || '') + '</td>' +
+          '<td>' + (x.status === 'pending' ? '<button class="btn primary tiny" data-payok="' + esc(x.id) + '">确认到账 · 放行 6h</button> <button class="btn ghost tiny" data-payno="' + esc(x.id) + '">拒绝</button>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table>';
+  }
   function beep() {
     try {
       const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
-      const ac = new AC(); const o = ac.createOscillator(); const g = ac.createGain();
-      o.connect(g); g.connect(ac.destination); o.frequency.value = 880; g.gain.value = 0.05; o.start();
-      setTimeout(function () { o.stop(); ac.close(); }, 220);
+      const ac = new AC(); const o = ac.createOscillator(); const gp = ac.createGain();
+      o.connect(gp); gp.connect(ac.destination); o.frequency.value = 880; gp.gain.value = 0.06; o.start();
+      setTimeout(function () { o.stop(); ac.close(); }, 260);
     } catch (e) {}
   }
-  document.getElementById('payKey').addEventListener('change', function () { try { localStorage.setItem(KEY_STORE, this.value.trim()); } catch (e) {} load(); });
+  function onMsg(m, isNew) {
+    if (!m || m.t !== 'req' || !m.id) return;
+    if (items[m.id]) return;
+    items[m.id] = { id: m.id, at: (m.at || Date.now()), status: 'pending', code: '', amt: m.amt || 6.66 };
+    render();
+    if (isNew) { beep(); if (App.toast) App.toast('新付款放行申请 ' + m.id + '（¥' + (m.amt || 6.66) + '）', 'ok'); }
+  }
+  function subscribe() {
+    if (!R) return;
+    if (window.__paySSE) { try { window.__paySSE.close(); } catch (e) {} }
+    const st = document.getElementById('payChState');
+    window.__paySSE = R.watch(function (m) { onMsg(m, true); }, function (s) { if (st) st.textContent = s === 'open' ? '✅ 已订阅 · 实时接收中' : ('连接异常（' + s + '）'); });
+    R.poll(3600).then(function (list) { list.forEach(function (m) { onMsg(m, false); }); });
+  }
   document.addEventListener('click', async function (e) {
     const t = e.target.closest ? e.target.closest('[data-act],[data-payok],[data-payno]') : null;
     if (!t) return;
     const act = t.getAttribute('data-act'), ok = t.getAttribute('data-payok'), no = t.getAttribute('data-payno');
-    const k = String((keyEl && keyEl.value) || '').trim();
-    if (act === 'pay-savekey') { try { localStorage.setItem(KEY_STORE, k); } catch (er) {} load(); }
-    else if (act === 'pay-refresh') load();
+    const hrs = Number((document.getElementById('payHours2') || {}).value) || 6;
+    if (act === 'pay-savech') { R.setCh(chEl.value); if (App.toast) App.toast('频道已保存，正在重新订阅…', 'ok'); App.views.pay(); }
+    else if (act === 'pay-copych' || act === 'pay-copytopic') { try { await navigator.clipboard.writeText(R.ch()); if (App.toast) App.toast('频道已复制：' + R.ch(), 'ok'); } catch (er) { if (App.toast) App.toast('请手动复制：' + R.ch(), 'err'); } }
+    else if (act === 'pay-custlink') { const u = (R.pageUrl() || '').replace('#/pay', '') + '?ch=' + R.ch(); try { await navigator.clipboard.writeText(u); if (App.toast) App.toast('客户链接已复制（含频道）', 'ok'); } catch (er) { if (App.toast) App.toast(u, 'err'); } }
+    else if (act === 'pay-refresh') { R.poll(3600).then(function (l) { l.forEach(function (m) { onMsg(m, false); }); }); }
     else if (act === 'pay-gen' || act === 'pay-gen3') {
       const n = act === 'pay-gen3' ? 3 : 1;
-      const hrs = Number((document.getElementById('payHours2') || {}).value) || 6;
       const out = [];
-      for (let i = 0; i < n; i++) out.push(window.PayPass.makeCode(hrs));
+      for (let i = 0; i < n; i++) out.push(PP.makeCode(hrs));
       const el = document.getElementById('payCodeOut');
       if (el) el.innerHTML = out.map(function (c) { return '<div>' + esc(c) + ' <span style="font-weight:400;font-size:12px;color:#9C9486">（' + hrs + ' 小时有效）</span></div>'; }).join('');
       window.__lastCodes = out.join('\n');
     }
     else if (act === 'pay-copy') { try { await navigator.clipboard.writeText(window.__lastCodes || ''); if (App.toast) App.toast('授权码已复制', 'ok'); } catch (er) { if (App.toast) App.toast('请手动选中复制', 'err'); } }
+    else if (act === 'pay-savekey') { try { localStorage.setItem('aufcl_owner_key_v1', document.getElementById('payKey').value.trim()); if (App.toast) App.toast('业主密钥已保存', 'ok'); } catch (er) {} }
     else if (ok) {
-      const hrs = Number((document.getElementById('payHours2') || {}).value) || 6;
-      const r = await fetch('api/pay/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ok, key: k, hours: hrs }) });
-      const j = await r.json();
-      if (j && j.ok) { if (App.toast) App.toast('已放行 ' + ok + '（' + j.hours + ' 小时）· 客户端会自动进入', 'ok'); }
-      load();
+      const code = PP.makeCode(hrs);
+      items[ok].status = 'approved'; items[ok].code = code; render();
+      R.publish({ t: 'ok', id: ok, code: code, exp: Date.now() + hrs * 3600 * 1000 }, { title: '✅ 已放行 ' + ok + '（' + hrs + ' 小时）', tags: 'white_check_mark' })
+        .then(function () { if (App.toast) App.toast('已放行 ' + ok + '，客户会自动进入', 'ok'); })
+        .catch(function (e) { if (App.toast) App.toast('通道发送失败：' + (e.message || e), 'err'); });
+      const k = String((document.getElementById('payKey') || {}).value || '').trim();
+      if (k) fetch('api/pay/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ok, key: k, hours: hrs }) }).catch(function () { });
     } else if (no) {
-      await fetch('api/pay/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: no, key: k }) });
-      load();
+      items[no].status = 'rejected'; render();
+      R.publish({ t: 'no', id: no }, { title: '❌ 未通过 ' + no, tags: 'x' }).catch(function () { });
     }
   });
-  load();
-  __payTimer = setInterval(load, 5000);
+  render();
+  subscribe();
+  __payTimer = setInterval(function () { if (R) R.poll(300).then(function (l) { l.forEach(function (m) { onMsg(m, false); }); }); }, 15000);
 };
-
 /* ============================== 帮助 ============================== */
 App.views.help = async function () {
   const flow = Guide.steps.map(function (s) {
