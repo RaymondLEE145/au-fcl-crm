@@ -495,6 +495,21 @@ App.views.clearance = async function (r) {
   run();
 };
 
+/* ============================== 箱唛工具（Pro 版嵌入） ============================== */
+App.views.mark = async function () {
+  setMain(pageHead('箱唛工具 · GlobalVertical Pro', 'ISO 780 包装标识 · GS1-128 SSCC-18 · Code128 · 追溯二维码 · A4 拼版 · 600DPI PDF/PNG 导出',
+      '<button class="btn ghost" data-act="mark-new">在新窗口打开</button>') +
+    card('使用方式', '与客户档案联动',
+      '<ul class="pt-list">' +
+      '<li class="pt info"><b>新增箱唛：</b>点右上角「＋ 新增箱唛」录入收货人、箱号、件数、目的港，系统自动生成标准唛头、条码与追溯二维码。</li>' +
+      '<li class="pt info"><b>批量：</b>可先「载入示例数据」看格式，或「导出 CSV / 备份数据」拿到模板，填完再「恢复数据」批量导入。</li>' +
+      '<li class="pt info"><b>出图：</b>支持 A4 拼版预览、600DPI PDF、PNG、复制图片与直接打印，唛头可贴箱也可交工厂。</li>' +
+      '<li class="pt warn"><b>数据位置：</b>箱唛数据保存在本浏览器本地（与客户档案分开）；重要批次请定期「备份数据」导出 JSON。</li>' +
+      '</ul>') +
+    card('箱唛工作台', '完整 Pro 版（原文嵌入，功能与单机版一致）',
+      '<iframe id="mkFrame" src="modules/mark.html" style="width:100%;height:82vh;min-height:680px;border:1px solid var(--line,#DCE3ED);border-radius:10px;background:#fff"></iframe>'));
+};
+
 /* ============================== 帮助 ============================== */
 App.views.help = async function () {
   const flow = Guide.steps.map(function (s) {

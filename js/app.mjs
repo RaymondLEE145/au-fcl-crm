@@ -7,6 +7,8 @@
 App.actions = App.actions || {};
 function bindActions() {
   document.addEventListener('click', function (e) {
+  var mkb = e.target.closest && e.target.closest('[data-act="mark-new"]');
+  if (mkb) { window.open('modules/mark.html', '_blank'); return; }
   var clb = e.target.closest && e.target.closest('[data-act="cl-open"]');
   if (clb) { window.open('modules/clearance.html', '_blank'); return; }
     const t = e.target.closest('[data-act]');

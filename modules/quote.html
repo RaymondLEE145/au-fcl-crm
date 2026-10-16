@@ -243,6 +243,7 @@ table.mat tr.grp td{background:#F7F1E7;font-weight:700;text-align:left;color:var
 .cl-badge{display:inline-block;font-size:10px;line-height:16px;padding:0 6px;border-radius:999px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;margin-left:4px;vertical-align:middle}
 .cl-badge.crit{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
 </style>
+<style id="au-ref-css">#auRefWrap{margin-top:16px}.au-tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:2px solid #E5DDCB;margin-bottom:12px}.au-tabs button{background:none;border:none;border-bottom:3px solid transparent;padding:8px 14px;font-size:13.5px;color:#6E675B;cursor:pointer;font-weight:600}.au-tabs button.on{color:#9C7C3D;border-bottom-color:#C8A27A}.au-tabs button:hover{color:#9C7C3D}.au-tb{width:100%;border-collapse:collapse;font-size:12.5px}.au-tb th{background:#F5EFE6;color:#6E675B;font-weight:600;text-align:left;padding:6px 8px;border:1px solid #E8DDD0;white-space:nowrap}.au-tb td{padding:5px 8px;border:1px solid #E8DDD0;vertical-align:top}.au-tb td.n{text-align:right;white-space:nowrap}.au-tb tr:nth-child(even) td{background:#FDFBF6}.au-tb .ok{color:#1B7F4B;font-weight:700}.au-tb .warn{color:#B26A00;font-weight:700}.au-tb .bad{color:#B3261E;font-weight:700}.au-kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}.au-kpi .k{background:#FBF7F0;border:1px solid #E8DDD0;border-radius:8px;padding:8px 14px;min-width:110px}.au-kpi .k .kl{font-size:11.5px;color:#9C9486}.au-kpi .k .kv{font-size:19px;font-weight:700;color:#9C7C3D}.au-ri{width:100%;min-width:64px;border:1px solid #E0D8CA;border-radius:5px;padding:3px 6px;font-size:12px;background:#fff}.au-ri:focus{outline:2px solid #EADFC2;border-color:#C8A27A}.au-sec{margin:16px 0 6px;font-size:13.5px;font-weight:700;color:#191713;border-left:3px solid #D4B978;padding-left:8px}.au-note{font-size:12px;color:#6E675B;margin:6px 0 2px}.au-btn{background:#0B2545;color:#fff;border:none;border-radius:7px;padding:8px 16px;font-size:13px;cursor:pointer;font-weight:600}.au-btn.ghost{background:#fff;color:#0B2545;border:1px solid #C7D2E0}.au-btn:hover{opacity:.9}</style>
 </head>
 <body class="lang-zh">
 
@@ -452,6 +453,16 @@ table.mat tr.grp td{background:#F7F1E7;font-weight:700;text-align:left;color:var
         <span class="pill" id="auOverrideTag" style="display:none"></span>
       </div>
       <div class="result" id="auResult" style="display:none"></div>
+      <!-- 澳洲派送参考：v7 三页签 + 费率可编辑 -->
+      <div id="auRefWrap" style="display:none">
+        <div class="au-tabs" id="auRefTabs">
+          <button data-art="val" class="on">费率与校验</button>
+          <button data-art="cov">覆盖范围</button>
+          <button data-art="src">数据来源</button>
+          <button data-art="rate">费率可编辑（管理员）</button>
+        </div>
+        <div id="auRefBody"></div>
+      </div>
     </div>
 
     <!-- DDP 税费 -->
@@ -1674,7 +1685,7 @@ function renderCnPanel(){
 function renderAuPanel(){
   const box = document.getElementById('auResult');
   const tag = document.getElementById('auOverrideTag');
-  if(S.mode === 'd2p' || S.mode === 'p2p'){ box.style.display = 'none'; tag.style.display = 'none'; return; }
+  if(S.mode === 'd2p' || S.mode === 'p2p'){ box.style.display = 'none'; tag.style.display = 'none'; var __rw0 = document.getElementById('auRefWrap'); if(__rw0) __rw0.style.display = 'none'; return; }
   box.style.display = '';
   const r0 = S.au.result;
   if(!r0){
@@ -1721,6 +1732,9 @@ function renderAuPanel(){
     (ov != null ? '<div class="auc-warn">' + L('已人工覆盖派送成本：' + money(ov,'AUD') + '（点「重置自动费用项」恢复）','Delivery cost manually overridden: ' + money(ov,'AUD') + ' (use "Reset Automatic Items" to restore)') + '</div>' : '');
   tag.style.display = ov != null ? '' : 'none';
   tag.textContent = ov != null ? L('派送费已人工覆盖','Delivery overridden') : '';
+  var __rw = document.getElementById('auRefWrap');
+  if(__rw){ __rw.style.display = ''; }
+  try{ if(typeof auRefRender === 'function') auRefRender(); }catch(e){}
 }
 function renderDdpPanel(){
   if(S.tax !== 'DDP') return;
@@ -3283,6 +3297,192 @@ function clQuoteUpdate(){
 }
 /* 初始化：进入模块时若已有品名立即识别一次 */
 setTimeout(function(){ try{ clQuoteUpdate(); }catch(e){} }, 300);
+
+/* ===== 澳洲派送参考面板：费率与校验 / 覆盖范围 / 数据来源 / 费率可编辑（复刻 v7 全澳FCL尾端派送核算系统） ===== */
+var AU_REF = { tab: 'val' };
+function auData(){ return window.__AU_DATA__ || {}; }
+function auModel(){ return (window.__AU_DATA__ || {}).MODEL || {}; }
+function auFx(){ var d = auData(); return (d.fx && num(d.fx.usdAud)) || 1.375; }
+function auR2(v){ return Math.round(num(v) * 100) / 100; }
+/* v7 mv()：把「真实世界校验点」换算成当前模型下的数值（逐条对应 v7 的 switch） */
+function auMv(d){
+  var E = CFG.delivery.extras || {}, P = CFG.delivery.ports || {};
+  var pI = function(n){ return AU_PK.indexOf(n); };
+  var T = function(p, k){ return ((P[p] || {}).terminal || {})[k]; };
+  var EM = function(p, k){ return ((P[p] || {}).empty || {})[k]; };
+  switch (d.kind) {
+    case 'epSL': { var a = auCart('Melbourne','40HQ','sl',20); return auR2(a.total + a.total * 0.37 + 67 + 22); }
+    case 'mcSL': { var b = auCart('Melbourne','40HQ','sl',110); return auR2(b.total + 120 + (b.total + 120) * 0.5 + 67 + 22); }
+    case 'epSTD': { var c1 = auCart('Melbourne','40HQ','std',20); return auR2(c1.total + c1.total * 0.37 + 67 + 22); }
+    case 'mcSTD': { var c2 = auCart('Melbourne','40HQ','std',110); return auR2(c2.total + 120 + (c2.total + 120) * 0.5 + 67 + 22); }
+    case 'melDPW': return T('Melbourne','DP World');
+    case 'melVICT': return T('Melbourne','VICT');
+    case 'melPAT': return T('Melbourne','Patrick');
+    case 'waitStd': return num(E.waitingStd);
+    case 'sat': return num(E.saturday);
+    case 'sun': return num(E.sunday);
+    case 'missed': return num(E.missedSlot);
+    case 'rebook': return num(E.rebooking);
+    case 'weekendCollect': return num(E.weekendCollect);
+    case 'empty': return 175;
+    case 'mackay': { var c3 = auCart('Mackay','20GP','std',5); return auR2((c3.total + T('Mackay','NQBP Mackay') + 225 + num(E.prePull) + 3 * num(E.chassisPerDay) + num(E.storagePerDay)) / auFx()); }
+    case 'clearance': return num(E.clearance);
+    case 'waitUSD': return num(E.waitingStd) / auFx();
+    case 'isps': return num(E.isps) / auFx();
+    case 'renew': return num(E.renewal) / auFx();
+    case 'melBundle': return T('Melbourne','Patrick') + 175;
+    case 'patSYD': return 224.90;
+    case 'patMEL': return 242.00;
+    case 'patFRE': return 96.13;
+    case 'slHour': return 165;
+    case 'citoCart': return (P.Sydney || {}).cartSL;
+    case 'citoFuel': return Math.round((P.Sydney || {}).cartSL * (P.Sydney || {}).fuel) / 100;
+    case 'citoEmpty': return EM('Sydney','Container Chain 预约还箱');
+    case 'citoTerm': return T('Sydney','DP World');
+    case 'citoSide': return (P.Sydney || {}).side;
+    case 'citoVbs': return (P.Sydney || {}).vbs;
+    case 'citoEnergy': return (P.Sydney || {}).energy;
+    case 'citoTotal': { var c5 = auCart('Sydney','40HQ','sl',14); return auR2(c5.total + c5.total * 0.27 + T('Sydney','DP World') + EM('Sydney','Container Chain 预约还箱') + (P.Sydney || {}).side); }
+    case 'km2208': { var r1 = AU_PCM.get('2208'); return r1 ? auKmAt(r1.i, pI('Sydney')) + 2 : 0; }
+    case 'km3350': { var r2 = AU_PCM.get('3350'); return r2 ? auKmAt(r2.i, pI('Melbourne')) : 0; }
+    case 'km2600': { var r3 = AU_PCM.get('2600'); return r3 ? auKmAt(r3.i, pI('Sydney')) : 0; }
+    case 'km2650': { var r4 = AU_PCM.get('2650'); return r4 ? auKmAt(r4.i, pI('Sydney')) : 0; }
+    case 'km6430': { var r5 = AU_PCM.get('6430'); return r5 ? auKmAt(r5.i, pI('Fremantle')) : 0; }
+    case 'km4350': { var r6 = AU_PCM.get('4350'); return r6 ? auKmAt(r6.i, pI('Brisbane')) : 0; }
+    default: return d.actual;
+  }
+}
+function auFmt(v, d2){ if (v === null || v === undefined || isNaN(v)) return '-'; return num(v).toLocaleString('en-AU', { minimumFractionDigits: d2 == null ? 2 : d2, maximumFractionDigits: d2 == null ? 2 : d2 }); }
+/* 页签①：费率与校验（v7 renderVal） */
+function auRenderVal(){
+  var rows = auModel().checks || [];
+  var h = '<div class="au-kpi">';
+  var hit = 0, sum = 0, n = 0, body = '';
+  for (var i = 0; i < rows.length; i++){
+    var d = rows[i], v = num(auMv(d));
+    var isRg = (d.lo !== undefined && d.hi !== undefined);
+    var ok = isRg ? (v >= d.lo && v <= d.hi) : (Math.abs((v - d.actual) / d.actual * 100) <= 10);
+    var err = (v - d.actual) / d.actual * 100; n++; sum += Math.abs(err); if (ok) hit++;
+    var cls = ok ? 'ok' : (Math.abs(err) <= 15 ? 'warn' : 'bad');
+    var rt = isRg ? (auFmt(d.lo, 0) + '–' + auFmt(d.hi, 0)) : auFmt(d.actual, 2);
+    body += '<tr><td>' + esc(d.g) + '</td><td class="n">' + esc(String(d.id)) + '</td><td>' + esc(d.item) + '</td><td>' + esc(d.unit) + '</td>' +
+      '<td class="n">' + rt + '</td><td class="n">' + auFmt(v, 2) + '</td><td class="n">' + (err >= 0 ? '+' : '') + err.toFixed(1) + '%</td>' +
+      '<td class="' + cls + '">' + (ok ? '命中' : (Math.abs(err) <= 15 ? '接近' : '偏离')) + '</td><td style="font-size:11.5px;color:#6E675B">' + esc(d.note || '') + '</td></tr>';
+  }
+  var mape = n ? sum / n : 0;
+  h += '<div class="k"><div class="kl">校验点位</div><div class="kv">' + n + '</div></div>' +
+       '<div class="k"><div class="kl">命中</div><div class="kv">' + hit + ' / ' + n + '</div></div>' +
+       '<div class="k"><div class="kl">命中率</div><div class="kv">' + (n ? Math.round(hit / n * 100) : 0) + '%</div></div>' +
+       '<div class="k"><div class="kl">平均绝对误差</div><div class="kv">' + mape.toFixed(2) + '%</div></div></div>';
+  h += '<div class="au-note">校验口径与 v7 完全一致：区间型按区间判定，点值型按偏差 ≤10% 判定（≤15% 记为接近）。里程类校验点使用 OSRM 真实公路路由。</div>';
+  h += '<div style="overflow:auto;max-height:60vh"><table class="au-tb"><thead><tr><th>来源</th><th>#</th><th>校验项</th><th>单位</th><th class="n">真实值</th><th class="n">模型</th><th class="n">偏差</th><th>判定</th><th>依据</th></tr></thead><tbody>' + body + '</tbody></table></div>';
+  return h;
+}
+/* 页签②：覆盖范围（v7 renderCov） */
+function auRenderCov(){
+  var cnt = {}, kmSum = {}, far = {};
+  for (var i = 0; i < AU_PCS.length; i++){
+    var bp = 0;
+    for (var p = 1; p < AU_PK.length; p++) if (auKmAt(i, p) < auKmAt(i, bp)) bp = p;
+    var k = AU_PK[bp]; cnt[k] = (cnt[k] || 0) + 1; kmSum[k] = (kmSum[k] || 0) + auKmAt(i, bp); if (auKmAt(i, bp) > 500) far[k] = (far[k] || 0) + 1;
+  }
+  var body = '', tot = 0;
+  for (var p2 = 0; p2 < AU_PK.length; p2++){
+    var key = AU_PK[p2], q = (CFG.delivery.ports || {})[key] || {}, c = cnt[key] || 0; tot += c;
+    body += '<tr><td><b>' + esc(auPortName(key)) + '</b></td><td>' + (q.major ? '<span style="color:#9C7C3D;font-weight:600">主要港</span>' : '二线港') + '</td>' +
+      '<td class="n">' + c + '</td><td class="n">' + (c ? Math.round(kmSum[key] / c) + ' km' : '-') + '</td><td class="n">' + (far[key] || 0) + '</td>' +
+      '<td class="n">' + auFmt(q.cartStd, 0) + ' / ' + auFmt(q.cartSL, 0) + '</td><td class="n">' + auFmt(q.kmRate, 2) + '</td>' +
+      '<td class="n">' + auFmt(q.fuel, 0) + '% / ' + auFmt(q.fuelRural, 0) + '%</td></tr>';
+  }
+  var h = '<div class="au-kpi">' +
+    '<div class="k"><div class="kl">覆盖邮编</div><div class="kv">' + AU_PCS.length + '</div></div>' +
+    '<div class="k"><div class="kl">港口</div><div class="kv">' + AU_PK.length + '</div></div>' +
+    '<div class="k"><div class="kl">里程查询</div><div class="kv">' + (AU_PCS.length * AU_PK.length).toLocaleString() + '</div></div>' +
+    '<div class="k"><div class="kl">路由引擎</div><div class="kv" style="font-size:14px">OSRM 真实公路</div></div></div>';
+  h += '<div style="overflow:auto;max-height:60vh"><table class="au-tb"><thead><tr><th>港口</th><th>类型</th><th class="n">服务邮编</th><th class="n">平均里程</th><th class="n">&gt;500km</th><th class="n">基础价 40HQ 标准/侧装</th><th class="n">元/km</th><th class="n">燃油 标准/偏远</th></tr></thead><tbody>' + body + '</tbody></table></div>';
+  h += '<div class="au-note">共 ' + tot + ' 个邮编归属判定完成；覆盖 NSW 2xxx / VIC 3xxx / QLD 4xxx / SA 5xxx / WA 6xxx；塔斯马尼亚（7xxx）与北领地（0xxx）不覆盖。</div>';
+  return h;
+}
+/* 页签③：数据来源（v7 renderSrc） */
+function auRenderSrc(){
+  var s = auModel().sources || [];
+  var body = '';
+  for (var i = 0; i < s.length; i++) body += '<tr><td><b>' + esc(s[i].k) + '</b></td><td>' + esc(s[i].v) + '</td><td style="font-size:11.5px;color:#6E675B">' + esc(s[i].src || '') + '</td></tr>';
+  var ev = auModel().evidence || auData().EVIDENCE || [];
+  var body2 = '';
+  for (var j = 0; j < ev.length; j++) body2 += '<tr><td style="font-size:11.5px">' + esc(ev[j].t || '') + '</td><td style="font-size:11.5px">' + esc(ev[j].g || '') + '</td><td>' + esc(ev[j].text || '') + '</td></tr>';
+  var h = '<div class="au-sec">数据与费率来源（' + s.length + ' 项）</div>' +
+    '<div style="overflow:auto;max-height:40vh"><table class="au-tb"><thead><tr><th style="width:220px">来源</th><th>核查内容</th><th style="width:240px">出处</th></tr></thead><tbody>' + body + '</tbody></table></div>';
+  if (ev.length) h += '<div class="au-sec">原始证据（' + ev.length + ' 条）</div><div style="overflow:auto;max-height:36vh"><table class="au-tb"><thead><tr><th style="width:120px">时间</th><th style="width:160px">群</th><th>原话</th></tr></thead><tbody>' + body2 + '</tbody></table></div>';
+  h += '<div class="au-note">模型版本 ' + esc((auModel().meta || {}).version || '') + ' · 更新 ' + esc((auModel().meta || {}).updated || '') + ' · 引擎 ' + esc((auModel().meta || {}).engine || '') + '</div>';
+  return h;
+}
+/* 页签④：费率可编辑（v7 费率区 + 保存 / 恢复默认） */
+function auSetPath(o, path, v){ var a = path.split('.'); for (var i = 0; i < a.length - 1; i++) o = o[a[i]]; o[a[a.length - 1]] = v; }
+function auGetPath(o, path){ var a = path.split('.'); for (var i = 0; i < a.length; i++){ if (o == null) return ''; o = o[a[i]]; } return o; }
+function auInp(label, path, step){
+  var v = auGetPath(CFG.delivery, path);
+  return '<label style="display:inline-block;margin:0 10px 8px 0;font-size:12px"><span style="display:block;color:#9C9486">' + esc(label) + '</span>' +
+    '<input class="au-ri" data-rp="' + path + '" type="number" step="' + (step || 1) + '" value="' + (v == null ? '' : v) + '" style="width:96px"></label>';
+}
+function auRenderRate(){
+  var P = CFG.delivery.ports || {}, E = CFG.delivery.extras || {}, K = CFG.delivery.kmModel || {}, CT = CFG.delivery.ctFactor || {};
+  var h = '<div class="au-note">这里就是 v7 的费率表：改完点「保存费率」立即生效并写入本机配置；「恢复默认」回到 v7 原始模型。报价界面的派送费会即时按新费率重算。</div>';
+  h += '<div style="margin:12px 0"><button class="au-btn" id="auRateSave">保存费率</button> <button class="au-btn ghost" id="auRateReset">恢复默认</button> <span id="auRateMsg" style="font-size:12.5px;color:#1B7F4B;margin-left:8px"></span></div>';
+  h += '<div class="au-sec">里程模型（幂律递减）</div><div>' + auInp('免费里程 km', 'kmModel.free', 1) + auInp('基准里程 ref', 'kmModel.ref', 1) + auInp('递减指数 exp', 'kmModel.exp', 0.05) + auInp('GST', 'gst', 0.01) + auInp('默认毛利率', 'margin.def', 0.01) + auInp('最低毛利率', 'margin.min', 0.01) + auInp('最高毛利率', 'margin.max', 0.01) + '</div>';
+  h += '<div class="au-sec">柜型系数</div><div>' + ['20GP','40GP','40HQ','45HQ'].map(function(c){ return auInp('标准 ' + c, 'ctFactor.std.' + c, 0.01) + auInp('侧装 ' + c, 'ctFactor.sl.' + c, 0.01); }).join('') + '</div>';
+  h += '<div class="au-sec">附加费（' + Object.keys(E).length + ' 项）</div><div>' + Object.keys(E).map(function(k){ return auInp(k, 'extras.' + k, 1); }).join('') + '</div>';
+  h += '<div class="au-sec">季节与年度系数</div><div>' + auInp('淡季', 'demand.low', 0.01) + auInp('平季', 'demand.normal', 0.01) + auInp('旺季', 'demand.peak', 0.01) + auInp('本年度', 'escalation.y2026', 0.001) + auInp('次年度', 'escalation.y2027', 0.001) + '</div>';
+  h += '<div class="au-sec">港口费率（' + AU_PK.length + ' 港）</div><div style="overflow:auto;max-height:52vh"><table class="au-tb"><thead><tr><th>港口</th><th class="n">标准车</th><th class="n">侧卸车</th><th class="n">元/km</th><th class="n">燃油%</th><th class="n">偏远燃油%</th><th class="n">过路</th><th class="n">拥堵</th><th class="n">VBS</th><th class="n">能源</th><th class="n">侧装</th><th>终端接入费</th><th>空箱返还</th></tr></thead><tbody>';
+  for (var i = 0; i < AU_PK.length; i++){
+    var n = AU_PK[i], q = P[n] || {};
+    var term = Object.keys(q.terminal || {}).map(function(k){ return auInp(k, 'ports.' + n + '.terminal.' + k, 1); }).join('');
+    var emp = Object.keys(q.empty || {}).map(function(k){ return auInp(k, 'ports.' + n + '.empty.' + k, 1); }).join('');
+    h += '<tr><td><b>' + esc(auPortName(n)) + '</b><br><span style="font-size:11px;color:#9C9486">' + esc(n) + (q.major ? ' · 主要港' : '') + '</span></td>' +
+      '<td>' + auInp('', 'ports.' + n + '.cartStd', 1) + '</td><td>' + auInp('', 'ports.' + n + '.cartSL', 1) + '</td>' +
+      '<td>' + auInp('', 'ports.' + n + '.kmRate', 0.01) + '</td><td>' + auInp('', 'ports.' + n + '.fuel', 1) + '</td>' +
+      '<td>' + auInp('', 'ports.' + n + '.fuelRural', 1) + '</td><td>' + auInp('', 'ports.' + n + '.toll', 1) + '</td>' +
+      '<td>' + auInp('', 'ports.' + n + '.cong', 1) + '</td><td>' + auInp('', 'ports.' + n + '.vbs', 1) + '</td>' +
+      '<td>' + auInp('', 'ports.' + n + '.energy', 1) + '</td><td>' + auInp('', 'ports.' + n + '.side', 1) + '</td>' +
+      '<td style="min-width:230px">' + term + '</td><td style="min-width:230px">' + emp + '</td></tr>';
+  }
+  h += '</tbody></table></div>';
+  h += '<div class="au-sec">费率区（按里程划分）</div><table class="au-tb" style="max-width:420px"><thead><tr><th>费率区</th><th class="n">上限 km</th></tr></thead><tbody>' +
+    (CFG.delivery.zones || []).map(function(z, i){ return '<tr><td>' + esc(z.n) + '</td><td>' + auInp('', 'zones.' + i + '.to', 1) + '</td></tr>'; }).join('') + '</tbody></table>';
+  return h;
+}
+function auRefRender(){
+  var box = document.getElementById('auRefBody');
+  if (!box) return;
+  if (AU_REF.tab === 'val') box.innerHTML = auRenderVal();
+  else if (AU_REF.tab === 'cov') box.innerHTML = auRenderCov();
+  else if (AU_REF.tab === 'src') box.innerHTML = auRenderSrc();
+  else box.innerHTML = auRenderRate();
+  var tabs = document.querySelectorAll('#auRefTabs button');
+  for (var i = 0; i < tabs.length; i++) tabs[i].className = (tabs[i].getAttribute('data-art') === AU_REF.tab) ? 'on' : '';
+  if (AU_REF.tab === 'rate'){
+    var sb = document.getElementById('auRateSave'), rb = document.getElementById('auRateReset');
+    if (sb) sb.onclick = function(){
+      var ins = document.querySelectorAll('#auRefBody input[data-rp]');
+      for (var k = 0; k < ins.length; k++){ var v = parseFloat(ins[k].value); if (!isNaN(v)) auSetPath(CFG.delivery, ins[k].getAttribute('data-rp'), v); }
+      saveCfg();
+      var msg = document.getElementById('auRateMsg'); if (msg) msg.textContent = '已保存 · ' + new Date().toLocaleTimeString();
+      try { recalcAu(); renderAuPanel(); renderFeeTable(); } catch(e){}
+      if (window.AU_REF_NOTIFY) window.AU_REF_NOTIFY('费率已保存，报价界面已同步');
+    };
+    if (rb) rb.onclick = function(){
+      resetCfg(); saveCfg(); auRefRender();
+      try { recalcAu(); renderAuPanel(); renderFeeTable(); } catch(e){}
+    };
+  }
+}
+document.addEventListener('click', function(e){
+  var b = e.target && e.target.closest ? e.target.closest('#auRefTabs button') : null;
+  if (!b) return;
+  AU_REF.tab = b.getAttribute('data-art') || 'val';
+  auRefRender();
+});
+
 </script>
 </body>
 </html>
