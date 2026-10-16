@@ -199,6 +199,24 @@ table.mat tr.grp td{background:#F7F1E7;font-weight:700;text-align:left;color:var
     width:794px;transform-origin:top left;z-index:auto}
 }
 
+/* ===== 目的港派送完整展示（与 v7 版式一致） ===== */
+#auResult .auc-band{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;border-left:3px solid var(--gold,#C8A27A);background:#FBF7F0;padding:10px 14px;border-radius:6px}
+#auResult .auc-p1{font-size:16px;font-weight:700;color:var(--gold-dark,#A67B5B)}
+#auResult .auc-p2{font-size:12.5px;color:var(--muted,#7A6A5A);margin-top:3px}
+#auResult .auc-tag{white-space:nowrap;font-size:12px;border:1px solid var(--gold,#C8A27A);border-radius:999px;padding:3px 10px;color:var(--gold-dark,#A67B5B)}
+#auResult table.auc-tbl{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+#auResult table.auc-tbl th{background:#F5EFE6;color:var(--muted,#7A6A5A);font-weight:600;text-align:left;padding:7px 10px;border:1px solid var(--border,#E8DDD0)}
+#auResult table.auc-tbl td{padding:7px 10px;border:1px solid var(--border,#E8DDD0);vertical-align:top}
+#auResult table.auc-tbl td.auc-n{text-align:right;white-space:nowrap}
+#auResult table.auc-tbl td.auc-s{color:var(--muted,#7A6A5A);font-size:12px}
+#auResult table.auc-tbl tr.auc-sum td{background:#FBF7F0;font-weight:700}
+#auResult .auc-total{margin-top:10px;border:1px solid var(--gold,#C8A27A);border-radius:8px;padding:12px 14px;background:#FFFDF8}
+#auResult .auc-lbl{font-size:12.5px;color:var(--muted,#7A6A5A)}
+#auResult .auc-amt{font-size:26px;font-weight:700;color:var(--gold-dark,#A67B5B);line-height:1.25}
+#auResult .auc-sub{font-size:12.5px;color:var(--muted,#7A6A5A);margin-top:4px}
+#auResult .auc-range{margin-top:8px;font-size:13px}
+#auResult .auc-warn{margin-top:8px;font-size:12.5px;color:#C0392B}
+#auResult .auc-good{margin-top:10px;font-size:13px;background:#F2F8F4;border:1px solid #CFE3D6;border-radius:6px;padding:10px 12px;color:#2E7D51}
 </style>
 </head>
 <body class="lang-zh">
@@ -752,7 +770,7 @@ zh: {
   f_delMode:'派送车型', del_std:'标准车 Standard', del_sl:'侧卸车 Side Loader',
   f_auPort:'卸货港（自动匹配 / 手动指定）', au_port_auto:'自动匹配卸货港', au_major:'（主港）', au_minor:'（二线）',
   f_wait:'等候时间（小时）', f_rural:'偏远 Rural', f_auManual:'手动指定卸货港',
-  f_extra:'非工作时间 / 特殊作业', f_collect:'代收项目（目的港码头实收，可计入派送费或单列）',
+  f_extra:'非工作时间 / 特殊作业', f_collect:'代收项目（码头实收 · 与 v7 一致默认计入，可取消改为单列）',
   btn_au_calc:'测算派送费', btn_au_manual:'手动指定派送成本',
   ex_sat:'周六作业', ex_sun:'周日作业', ex_weekendCollect:'周末提柜', ex_rebooking:'改期', ex_missedSlot:'错过时段',
   ex_offSlot:'错槽', ex_prePull:'预提', ex_dre:'直还码头', ex_staging:'隔夜存场', ex_hazardous:'危险品', ex_overweight:'超重', ex_storage:'仓储',
@@ -838,7 +856,7 @@ en: {
   f_delMode:'Trailer Type', del_std:'Standard Trailer', del_sl:'Side Loader',
   f_auPort:'Port of Discharge (auto / manual)', au_port_auto:'Auto-match discharge port', au_major:' (major)', au_minor:' (secondary)',
   f_wait:'Waiting Time (hours)', f_rural:'Rural', f_auManual:'Manual port selection',
-  f_extra:'After-hours / Special Services', f_collect:'Pass-through items (terminal charges, optional)',
+  f_extra:'After-hours / Special Services', f_collect:'Pass-through items (on by default, same as v7; untick to itemise separately)',
   btn_au_calc:'Calculate Delivery', btn_au_manual:'Override Delivery Cost',
   ex_sat:'Saturday', ex_sun:'Sunday', ex_weekendCollect:'Weekend pickup', ex_rebooking:'Re-booking', ex_missedSlot:'Missed slot',
   ex_offSlot:'Off-slot', ex_prePull:'Pre-pull', ex_dre:'Direct return', ex_staging:'Overnight staging', ex_hazardous:'Dangerous goods', ex_overweight:'Overweight', ex_storage:'Storage',
@@ -1211,7 +1229,7 @@ const S = {
   lang:'zh', term:'EXW', mode:'d2d', tax:'none', ctn:'40HQ',
   tier:0.10, cur:'AUD', showCost:true,
   cn:{ prov:'广东', city:'东莞', addr:'', portId:'', manualPort:false, peak:1, overnight:0, dg:false, ow:false, lift:false },
-  au:{ pc:'', addr:'', mode:'std', portIdx:-1, manualPort:false, rural:false, wait:0, weight:'', chassisDays:0, storageDays:0, demand:1, esc:1, extras:{}, collect:{}, terminalName:'', emptyName:'', result:null },
+  au:{ pc:'', addr:'', mode:'std', portIdx:-1, manualPort:false, rural:false, wait:0, weight:'', chassisDays:0, storageDays:0, demand:1, esc:1, extras:{}, collect:{ terminal:true, vbs:true, energy:true, empty:true }, terminalName:'', emptyName:'', result:null },
   ocean:{ amount:'', cur:'USD', note:'' },
   customs:{ type:'formal', suppliers:1 },
   taxInfo:{ product:'', goods:'', coo:false, makeCOO:false, insured:false },
@@ -1490,15 +1508,18 @@ function refreshAuPortOptions(){
   sel.innerHTML = opts(list, S.au.manualPort ? String(S.au.portIdx) : '-1');
   const pName = S.au.manualPort && S.au.portIdx >= 0 ? AU_PK[S.au.portIdx] : (rec ? AU_PK[auPickPort(rec, -1).idx] : AU_PK[0]);
   const p = (CFG.delivery.ports || {})[pName] || {};
+  /* 与 v7 一致：终端接入与还箱堆场默认取该港列表第一个；换港后原选项失效必须重置，否则该项费用会被静默漏掉 */
+  const tKeys = Object.keys(p.terminal || {});
   const tSel = document.getElementById('f_terminalName');
+  if(tKeys.indexOf(S.au.terminalName) < 0) S.au.terminalName = tKeys.length ? tKeys[0] : '';
   if(tSel){
-    tSel.innerHTML = opts(Object.keys(p.terminal || {}).map(k=>({ v:k, t:k + ' A$' + p.terminal[k] })), S.au.terminalName);
-    if(!S.au.terminalName && tSel.options.length) S.au.terminalName = tSel.options[0].value;
+    tSel.innerHTML = opts(tKeys.map(k=>({ v:k, t:k + ' A$' + p.terminal[k] })), S.au.terminalName);
   }
+  const eKeys = Object.keys(p.empty || {});
   const eSel = document.getElementById('f_emptyName');
+  if(eKeys.indexOf(S.au.emptyName) < 0) S.au.emptyName = eKeys.length ? eKeys[0] : '';
   if(eSel){
-    eSel.innerHTML = opts(Object.keys(p.empty || {}).map(k=>({ v:k, t:depotName(k) + ' A$' + p.empty[k] })), S.au.emptyName);
-    if(!S.au.emptyName && eSel.options.length) S.au.emptyName = eSel.options[0].value;
+    eSel.innerHTML = opts(eKeys.map(k=>({ v:k, t:depotName(k) + ' A$' + p.empty[k] })), S.au.emptyName);
   }
 }
 function renderTierTabs(){
@@ -1630,32 +1651,48 @@ function renderAuPanel(){
   if(S.mode === 'd2p' || S.mode === 'p2p'){ box.style.display = 'none'; tag.style.display = 'none'; return; }
   box.style.display = '';
   const r0 = S.au.result;
-  if(!r0){ box.innerHTML = '<span class="k">' + L('输入 4 位澳洲邮编后自动测算派送费（成本），再按当前利润率档位生成报价。',
-    'Enter a 4-digit Australian postcode to calculate the cartage cost, then the quote is generated at the selected margin tier.') + '</span>'; return; }
+  if(!r0){
+    box.innerHTML = '<span class="k">' + L('输入 4 位澳洲邮编后自动测算派送费（成本），再按当前利润率档位生成报价。',
+      'Enter a 4-digit Australian postcode to calculate the cartage cost, then the quote is generated at the selected margin tier.') + '</span>';
+    return;
+  }
   if(!r0.ok){ box.innerHTML = '<span class="err">' + esc(r0.err) + '</span>'; return; }
   const ov = S.rowOverrides['delivery'];
+  const cost = ov != null ? num(ov) : num(r0.cost);
   const mo = marginOf('delivery', S.tier);
-  const sell = mo.formula === 'margin' ? r0.cost / (1 - Math.min(0.95, mo.rate)) : r0.cost * (1 + mo.rate);
-  const K = (zh, en)=> '<span class="k">' + L(zh, en) + '</span>';
-  const band = num(r0.band) || 0.1;
+  const mRate = mo.formula === 'margin' ? Math.min(0.95, mo.rate) : 0;
+  const sell = mo.formula === 'margin' ? cost / (1 - mRate) : cost * (1 + mo.rate);
+  const profit = sell - cost;
+  const mult = mo.formula === 'margin' ? 1 / (1 - mRate) : (1 + mo.rate);
   const gstRate = num(r0.gstRate) || 0.1;
+  const band = num(r0.band) || 0.1;
+  const minM = num((CFG.delivery.margin || {}).min) || 0.05;
+  const floor = cost / (1 - minM);
+  const A = 'A' + String.fromCharCode(36);
+  const rowsHtml = (r0.rows || []).map(x=>
+    '<tr><td>' + esc(L(x.l, x.lEn)) + '</td><td class="auc-n">' + money(x.a,'AUD') + '</td><td class="auc-s">' + esc(L(x.n, x.nEn)) + '</td></tr>').join('');
+  const seasonRow = (num(r0.demand) !== 1 || num(r0.esc) !== 1)
+    ? '<tr><td>' + L('季节因子 ×','Season ×') + num(r0.demand).toFixed(2) + L(' · 年度系数 ×',' · year factor ×') + num(r0.esc).toFixed(3) + '</td>' +
+      '<td class="auc-n">' + money(r0.adj,'AUD') + '</td><td class="auc-s">' + L('淡季 0.92 / 旺季 1.18；次年度预估 +11.6%','Low 0.92 / peak 1.18; next-year +11.6%') + '</td></tr>'
+    : '';
   box.innerHTML =
-    '<div>' + K('邮编：','Postcode: ') + '<b>' + r0.pc + ' ' + esc(r0.suburb) + ' ' + r0.st + '</b>' +
-    K('　卸货港：','　Discharge port: ') + '<b>' + esc(auPortName(r0.portName)) + '</b> <span class="pill">' + zoneName(r0.zone) + ' · ' + r0.km + ' km</span>' +
-    K('　匹配规则：','　Port rule: ') + esc(r0.why) + '</div>' +
-    '<div style="margin-top:6px">' + r0.rows.map(x=>'<div><span class="k">·</span> ' + esc(L(x.l, x.lEn)) + '　<b>' + money(x.a,'AUD') + '</b>' + ((S.lang==='zh'?x.n:x.nEn) ? '　<span class="k">' + esc(L(x.n, x.nEn)) + '</span>' : '') + '</div>').join('') + '</div>' +
-    '<div style="margin-top:6px">' + K('成本价合计（不含 GST）：','Cost total (excl. GST): ') + '<b>' + money(r0.cost,'AUD') + '</b>' +
-    ((r0.demand !== 1 || r0.esc !== 1) ? '　<span class="k">' + L('已含季节 ×','incl. season ×') + r0.demand.toFixed(2) + L(' · 年度 ×',' · year ×') + r0.esc.toFixed(3) + '</span>' : '') + '</div>' +
-    '<div>' + K('对外报价：','Quoted price: ') + '<b style="font-size:16px">' + money(sell,'AUD') + '</b>' +
-    '　<span class="k">' + (mo.formula === 'margin' ? L('售价毛利率','margin on sell') : L('成本加成','markup on cost')) + ' ' + (mo.rate*100).toFixed(1) + '%</span>' +
-    '　<span class="k">' + L('毛利 ','Profit ') + money(sell - r0.cost,'AUD') + '</span>' +
-    '　<span class="k">' + L('含 10% GST 参考 ','Incl. 10% GST ref. ') + money(sell * (1 + gstRate),'AUD') + '</span></div>' +
-    '<div>' + K('建议区间：','Suggested range: ') + money(sell * (1 - band * 0.6),'AUD') + ' – ' + money(sell * (1 + band * 0.6),'AUD') +
-    '　<span class="k">' + L('（±','(±') + Math.round(band * 60) + L('%，最低可让至 ','%; floor price ') + money(r0.cost / (1 - num(CFG.delivery.margin ? CFG.delivery.margin.min : 0.05) || 0.05),'AUD') + L('，守住 ',' to keep ') + (num(CFG.delivery.margin ? CFG.delivery.margin.min : 0.05) * 100 || 5).toFixed(0) + L('% 毛利）','% margin)') + '</span></div>' +
-    (r0.warnRemote ? '<div class="err">' + L('偏远提示：距港口 ' + r0.km + ' 公里，建议先与车队确认路况与返程空驶后再对外报价。',
-      'Remote notice: ' + r0.km + ' km from the port — confirm road conditions and empty running with the carrier before quoting.') + '</div>' : '') +
-    (ov != null ? '<div class="err">' + L('已人工覆盖派送成本：' + money(ov,'AUD') + '（点「重置自动费用项」恢复）',
-      'Delivery cost manually overridden: ' + money(ov,'AUD') + ' (use "Reset Automatic Items" to restore)') + '</div>' : '');
+    '<div class="auc-band"><div>' +
+      '<div class="auc-p1">' + esc(auPortName(r0.portName)) + '</div>' +
+      '<div class="auc-p2">' + esc(r0.why) + ' · ' + L('真实公路里程 ','Real road distance ') + '<b>' + r0.km + ' km</b>' + L('（OSRM 路网）',' (OSRM network)') + ' · ' + L('费率区 ','Rate zone ') + esc(zoneName(r0.zone)) + '</div>' +
+    '</div><div class="auc-tag">' + esc(S.ctn) + ' · ' + (r0.mode === 'sl' ? L('侧卸车','Side loader') : L('标准车','Standard')) + (r0.rural ? ' · ' + L('偏远','Rural') : '') + '</div></div>' +
+    '<table class="auc-tbl"><thead><tr><th>' + L('成本项','Cost item') + '</th><th class="auc-n" style="width:120px">' + L('金额','Amount') + '</th><th style="width:38%">' + L('说明','Note') + '</th></tr></thead><tbody>' +
+      rowsHtml + seasonRow +
+      '<tr class="auc-sum"><td>' + L('成本价合计（不含 GST）','Cost total (excl. GST)') + '</td><td class="auc-n">' + money(cost,'AUD') + '</td><td class="auc-s">' + L('车队与码头实收','Payable to carrier & terminals') + '</td></tr>' +
+      '<tr><td>' + L('对外毛利（售价毛利率 ','Gross profit (margin on sell ') + (mRate*100).toFixed(1) + '%)</td><td class="auc-n">+' + money(profit,'AUD') + '</td>' +
+      '<td class="auc-s">' + L('加价系数 ','Multiplier ') + mult.toFixed(3) + L(' ×（最低 ','× (floor ') + (minM*100).toFixed(0) + '%）</td></tr>' +
+    '</tbody></table>' +
+    '<div class="auc-total"><div class="auc-lbl">' + L('对外报价 · 不含 GST','Quote · excl. GST') + '</div>' +
+      '<div class="auc-amt">' + money(sell,'AUD') + '</div>' +
+      '<div class="auc-sub">' + L('含 10% GST ','Incl. 10% GST ') + money(sell*(1+gstRate),'AUD') + '　·　' + L('成本价 ','Cost ') + money(cost,'AUD') + '　·　' + L('毛利 ','Profit ') + money(profit,'AUD') + '</div></div>' +
+    '<div class="auc-range">' + L('建议区间 ','Suggested range ') + money(sell*(1-band*0.6),'AUD') + ' – ' + money(sell*(1+band*0.6),'AUD') + L('（±','(±') + Math.round(band*60) + '%）</div>' +
+    (r0.warnRemote ? '<div class="auc-warn"><b>' + L('偏远提示：','Remote notice: ') + '</b>' + L('距港口 ' + r0.km + ' 公里，建议先与车队确认路况与返程空驶后再对外报价。', r0.km + ' km from the port — confirm road conditions and empty running with the carrier before quoting.') + '</div>' : '') +
+    '<div class="auc-good"><b>' + L('报价建议：','Recommendation: ') + '</b>' + L('成本 ','Cost ') + money(cost,'AUD') + L('，按 ','at ') + (mRate*100).toFixed(1) + L('% 毛利对外报 ','% margin quote ') + '<b>' + money(sell,'AUD') + '</b>' + L('（含 GST ','(incl. GST ') + money(sell*(1+gstRate),'AUD') + L('）；最低可让至 ','); floor price ') + money(floor,'AUD') + L('（守住 ','(keep ') + (minM*100).toFixed(0) + L('% 毛利）。','% margin).') + '</div>' +
+    (ov != null ? '<div class="auc-warn">' + L('已人工覆盖派送成本：' + money(ov,'AUD') + '（点「重置自动费用项」恢复）','Delivery cost manually overridden: ' + money(ov,'AUD') + ' (use "Reset Automatic Items" to restore)') + '</div>' : '');
   tag.style.display = ov != null ? '' : 'none';
   tag.textContent = ov != null ? L('派送费已人工覆盖','Delivery overridden') : '';
 }
@@ -2686,7 +2723,7 @@ function newQuote(){
   S.term = 'EXW'; S.mode = 'd2d'; S.tax = 'none'; S.ctn = '40HQ';
   S.tier = tier; S.cur = cur; S.lang = lang; S.showCost = showCost;
   S.cn = { prov:'广东', city:'东莞', addr:'', portId:'', manualPort:false, peak:1, overnight:0, dg:false, ow:false, lift:false };
-  S.au = { pc:'', addr:'', mode:'std', portIdx:-1, manualPort:false, rural:false, wait:0, weight:'', chassisDays:0, storageDays:0, demand:1, esc:1, extras:{}, collect:{}, terminalName:'', emptyName:'', result:null };
+  S.au = { pc:'', addr:'', mode:'std', portIdx:-1, manualPort:false, rural:false, wait:0, weight:'', chassisDays:0, storageDays:0, demand:1, esc:1, extras:{}, collect:{ terminal:true, vbs:true, energy:true, empty:true }, terminalName:'', emptyName:'', result:null };
   S.ocean = { amount:'', cur:'USD', note:'' };
   S.customs = { type:'formal', suppliers:1 };
   S.taxInfo = { product:'', goods:'', coo:false, makeCOO:false, insured:false };
