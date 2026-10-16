@@ -16,6 +16,7 @@ window.__errs = [];
 window.addEventListener('error', function (e) { try { window.__errs.push((e.message || 'error') + ' @' + (e.filename || '') + ':' + (e.lineno || 0)); } catch (x) {} });
 window.addEventListener('unhandledrejection', function (e) { try { window.__errs.push('rejection: ' + String((e.reason && e.reason.message) || e.reason)); } catch (x) {} });
 </script>
+<style id="pay-gate-css">.lg-tabs{display:flex;gap:6px;margin:14px 0 16px;background:#F5EFE6;border-radius:9px;padding:4px}.lg-tabs .lg-tab{flex:1;border:none;background:none;padding:9px 6px;border-radius:7px;font-size:13.5px;font-weight:600;color:#7A6A5A;cursor:pointer}.lg-tabs .lg-tab.on{background:#fff;color:#9C7C3D;box-shadow:0 1px 3px rgba(0,0,0,.08)}.pay-head{text-align:center;font-size:14.5px;color:#3C2E22;margin-bottom:12px}.pay-head b{color:#9C7C3D;font-size:17px}.pay-qr{display:block;width:100%;max-width:300px;margin:0 auto 14px;border-radius:12px;border:1px solid #E5DDCB;box-shadow:0 6px 20px rgba(11,37,69,.10)}.pay-steps{background:#FBF7F0;border:1px solid #EFE9DC;border-radius:9px;padding:11px 13px;margin-bottom:14px}.pay-step{font-size:12.5px;color:#3D3932;line-height:1.75}.pay-step b{color:#9C7C3D}.pay-step+.pay-step{margin-top:6px}.lg-ghost{width:100%;margin-top:8px;background:#fff !important;color:#9C7C3D !important;border:1px solid #D4B978 !important}.pay-note{font-size:11.5px;color:#9C9486;line-height:1.7;margin-top:10px;text-align:center}.pass-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1B7F4B;background:#E6F4EC;border:1px solid #BFE3CE;border-radius:999px;padding:3px 10px}.pass-chip.warn{color:#B26A00;background:#FDF7E9;border-color:#EEDEB4}.pay-badge{font-size:11.5px;color:#9C9486}</style>
 </head>
 <body>
 <div id="loginOverlay" class="show">
@@ -23,25 +24,48 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
     <img class="lg-logo" src="assets/logo.png" alt="GlobalVertical">
     <div class="lg-title">澳洲 FCL 客户管理系统</div>
     <div class="lg-sub">AUSTRALIA FCL · CUSTOMER MANAGEMENT</div>
-    <div class="lg-field">
-      <label for="lgUser">账 号</label>
-      <input id="lgUser" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="请输入账号">
+    <div class="lg-tabs">
+      <button type="button" class="lg-tab on" data-lgtab="acc">账号登录</button>
+      <button type="button" class="lg-tab" data-lgtab="pay">扫码付费进入</button>
     </div>
-    <div class="lg-field">
-      <label for="lgPass">密 码</label>
-      <input id="lgPass" class="input" type="password" autocomplete="off" placeholder="请输入密码">
-    </div>
-    <div class="lg-field">
-      <label for="lgCaptcha">验证码</label>
-      <div class="lg-cap-row">
-        <input id="lgCaptcha" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="请输入右侧验证码">
-        <canvas id="lgCanvas" width="124" height="44" title="看不清？点一下换一张"></canvas>
+    <div id="lgPaneAcc">
+      <div class="lg-field">
+        <label for="lgUser">账 号</label>
+        <input id="lgUser" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="请输入账号">
       </div>
+      <div class="lg-field">
+        <label for="lgPass">密 码</label>
+        <input id="lgPass" class="input" type="password" autocomplete="off" placeholder="请输入密码">
+      </div>
+      <div class="lg-field">
+        <label for="lgCaptcha">验证码</label>
+        <div class="lg-cap-row">
+          <input id="lgCaptcha" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="请输入右侧验证码">
+          <canvas id="lgCanvas" width="124" height="44" title="看不清？点一下换一张"></canvas>
+        </div>
+      </div>
+      <label class="lg-remember"><input type="checkbox" id="lgRemember" checked> 记住登录状态（12 小时内免登录）</label>
+      <button id="lgBtn" type="button">登 录</button>
+      <div class="lg-msg" id="lgMsg"></div>
     </div>
-    <label class="lg-remember"><input type="checkbox" id="lgRemember" checked> 记住登录状态（12 小时内免登录）</label>
-    <button id="lgBtn" type="button">登 录</button>
-    <div class="lg-msg" id="lgMsg"></div>
-    <div class="lg-foot">仅授权人员使用 · 登录后所有操作记录在本机数据文件</div>
+    <div id="lgPanePay" style="display:none">
+      <div class="pay-head">扫码支付 <b>¥6.66</b> · 单次授权 <b>6 小时</b></div>
+      <img class="pay-qr" src="img/pay-wechat.png" alt="微信收款码（Plutôt）">
+      <div class="pay-steps">
+        <div class="pay-step"><b>1</b> 用微信「扫一扫」支付 <b>¥6.66</b></div>
+        <div class="pay-step"><b>2</b> 付款成功后二选一：<br>· 点「我已支付，请求放行」→ 我方确认到账后自动进入（需运行服务端）<br>· 或输入我方发你的<b>授权码</b> → 立即可进入（任何模式都可用）</div>
+        <div class="pay-step"><b>3</b> 通行证 <b>6 小时</b>一次性有效，到期自动退出</div>
+      </div>
+      <div class="lg-field">
+        <label for="payCode">授权码</label>
+        <input id="payCode" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="GV-XXXX-XXXX-XXXX">
+      </div>
+      <button id="payCodeBtn" type="button">用授权码进入</button>
+      <button id="payReqBtn" type="button" class="lg-ghost">我已支付，请求放行</button>
+      <div class="lg-msg" id="payMsg"></div>
+      <div class="pay-note">通行证到期只清通行证，<b>不会删除您的客户数据</b>（数据保存在本机）。再次付款即可继续。</div>
+    </div>
+    <div class="lg-foot">仅授权人员使用 · 登录后所有操作记录在本机数据文件 · 内容受保护</div>
   </div>
 </div>
 
@@ -66,6 +90,7 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
       <button class="nav-item" data-nav="backup"><span class="ni">🛡</span><span class="nt">备份中心</span></button>
       <button class="nav-item" data-nav="export"><span class="ni">📄</span><span class="nt">导出中心</span></button>
       <div class="nav-group">系统</div>
+      <button class="nav-item" data-nav="pay"><span class="ni">💳</span><span class="nt">付费放行</span></button>
       <button class="nav-item" data-nav="settings"><span class="ni">⚙️</span><span class="nt">系统设置</span></button>
       <button class="nav-item" data-nav="help"><span class="ni">❓</span><span class="nt">使用指南</span></button>
     </nav>
@@ -85,6 +110,7 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
         </div>
       </div>
       <div class="tb-right">
+        <span class="pass-chip" id="passChip" style="display:none;margin-right:8px">⏱ 付费通行</span>
         <span class="conn-chip" id="connChip"><i></i>连接中…</span>
         <span class="who">👤 <b id="whoUser">RAYMOND</b></span>
         <button class="btn ghost tiny" id="logoutBtn" title="退出登录">退出</button>
@@ -110,6 +136,7 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
 <div id="toastBox" class="toast-box"></div>
 
 <script src="js/auth-config.mjs?v=20261016h"></script>
+<script src="js/paypass.mjs?v=20261022a"></script>
 <script src="js/auth.mjs?v=20261016h"></script>
 <script src="js/au-data.mjs?v=20261016h"></script>
 <script src="js/au-model.mjs?v=20261016h"></script>
@@ -145,6 +172,7 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
 <script src="js/flow.mjs?v=20261016h"></script>
 <script src="js/pdfdoc.mjs?v=20261016h"></script>
 <script src="js/app.mjs?v=20261016h"></script>
+<script src="js/paygate.mjs?v=20261022a"></script>
 <script>
 /* 顶栏状态同步（不侵入业务逻辑） */
 (function () {

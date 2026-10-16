@@ -510,6 +510,92 @@ App.views.mark = async function () {
       '<iframe id="mkFrame" src="modules/mark.html" style="width:100%;height:82vh;min-height:680px;border:1px solid var(--line,#DCE3ED);border-radius:10px;background:#fff"></iframe>'));
 };
 
+/* ============================== 付费放行（业主端） ============================== */
+var __payTimer = null;
+App.views.pay = async function () {
+  if (__payTimer) { clearInterval(__payTimer); __payTimer = null; }
+  const KEY_STORE = 'aufcl_owner_key_v1';
+  const getKey = function () { try { return localStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; } };
+  setMain(pageHead('付费放行 · 业主端', '客户扫码付款后，在这里确认到账并一键放行（6 小时一次性通行证）',
+      '<button class="btn ghost" data-act="pay-refresh">刷新</button>') +
+    card('业主密钥', '首次使用填一次，本机记住；也可直接看启动窗口打印的密钥',
+      '<div class="form-row"><label>业主密钥</label><input id="payKey" class="input" value="' + esc(getKey()) + '" placeholder="GVPAY-XXXXXX"></div>' +
+      '<div class="btn-row"><button class="btn primary" data-act="pay-savekey">保存密钥并连接</button>' +
+      '<span class="pay-badge" id="payConn">未连接</span></div>') +
+    card('授权码生成器', '不需要服务端也能用：生成后发给付款人，他填进「扫码付费进入 → 授权码」即可',
+      '<div class="form-row"><label>有效时长（小时）</label><input id="payHours2" class="input" type="number" value="6" step="0.5" min="0.5" style="max-width:140px"></div>' +
+      '<div class="btn-row"><button class="btn primary" data-act="pay-gen">生成授权码</button>' +
+      '<button class="btn ghost" data-act="pay-copy">复制</button>' +
+      '<button class="btn ghost" data-act="pay-gen3">连出 3 个</button></div>' +
+      '<div id="payCodeOut" style="margin-top:10px;font-size:15px;font-weight:700;color:#9C7C3D;letter-spacing:.5px"></div>') +
+    card('待放行请求', '客户点「我已支付，请求放行」后会出现在这里（每 5 秒自动刷新，有新请求会响铃提示）',
+      '<div id="payList"><div class="k">加载中…</div></div>'));
+  const keyEl = document.getElementById('payKey');
+  const listEl = document.getElementById('payList');
+  const connEl = document.getElementById('payConn');
+  const load = async function () {
+    const k = String((keyEl && keyEl.value) || '').trim();
+    if (!k) { if (connEl) connEl.textContent = '请先填业主密钥'; return; }
+    try {
+      const r = await fetch('api/pay/list?key=' + encodeURIComponent(k));
+      const j = await r.json();
+      if (!r.ok || j.ok === false) { if (connEl) connEl.textContent = j.error || '密钥不正确'; if (listEl) listEl.innerHTML = '<div class="k">无法读取：' + esc(j.error || ('HTTP ' + r.status)) + '</div>'; return; }
+      if (connEl) connEl.textContent = '已连接 · 单价 ¥' + j.amount + ' · 默认 ' + j.hours + ' 小时';
+      const rows = j.list || [];
+      const pend = rows.filter(function (x) { return x.status === 'pending'; });
+      const prev = window.__paySeen || 0;
+      if (pend.length > prev) { try { beep(); } catch (e) {} if (App.toast) App.toast('有 ' + pend.length + ' 个新的付费放行请求', 'ok'); }
+      window.__paySeen = pend.length;
+      if (!rows.length) { listEl.innerHTML = '<div class="k">暂无请求</div>'; return; }
+      listEl.innerHTML = '<table class="tbl"><thead><tr><th>单号</th><th>时间</th><th>状态</th><th>授权码</th><th style="width:190px">操作</th></tr></thead><tbody>' +
+        rows.slice(0, 30).map(function (x) {
+          const st = x.status === 'approved' ? '<span style="color:#1B7F4B;font-weight:700">已放行</span>' : (x.status === 'rejected' ? '<span style="color:#B3261E">已拒绝</span>' : '<span style="color:#B26A00;font-weight:700">待确认</span>');
+          return '<tr><td>' + esc(x.id) + '</td><td>' + esc(x.atText || '') + '</td><td>' + st + '</td><td style="font-family:monospace">' + esc(x.code || '') + '</td>' +
+            '<td>' + (x.status === 'pending' ? '<button class="btn primary tiny" data-payok="' + esc(x.id) + '">确认到账 · 放行 6h</button> <button class="btn ghost tiny" data-payno="' + esc(x.id) + '">拒绝</button>' : '') + '</td></tr>';
+        }).join('') + '</tbody></table>';
+    } catch (e) { if (connEl) connEl.textContent = '连接失败（在线静态版无此接口）'; if (listEl) listEl.innerHTML = '<div class="k">当前是「在线静态版」，没有服务端放行接口。请改用上面的「授权码生成器」：生成授权码后发给付款人即可。</div>'; }
+  };
+  function beep() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+      const ac = new AC(); const o = ac.createOscillator(); const g = ac.createGain();
+      o.connect(g); g.connect(ac.destination); o.frequency.value = 880; g.gain.value = 0.05; o.start();
+      setTimeout(function () { o.stop(); ac.close(); }, 220);
+    } catch (e) {}
+  }
+  document.getElementById('payKey').addEventListener('change', function () { try { localStorage.setItem(KEY_STORE, this.value.trim()); } catch (e) {} load(); });
+  document.addEventListener('click', async function (e) {
+    const t = e.target.closest ? e.target.closest('[data-act],[data-payok],[data-payno]') : null;
+    if (!t) return;
+    const act = t.getAttribute('data-act'), ok = t.getAttribute('data-payok'), no = t.getAttribute('data-payno');
+    const k = String((keyEl && keyEl.value) || '').trim();
+    if (act === 'pay-savekey') { try { localStorage.setItem(KEY_STORE, k); } catch (er) {} load(); }
+    else if (act === 'pay-refresh') load();
+    else if (act === 'pay-gen' || act === 'pay-gen3') {
+      const n = act === 'pay-gen3' ? 3 : 1;
+      const hrs = Number((document.getElementById('payHours2') || {}).value) || 6;
+      const out = [];
+      for (let i = 0; i < n; i++) out.push(window.PayPass.makeCode(hrs));
+      const el = document.getElementById('payCodeOut');
+      if (el) el.innerHTML = out.map(function (c) { return '<div>' + esc(c) + ' <span style="font-weight:400;font-size:12px;color:#9C9486">（' + hrs + ' 小时有效）</span></div>'; }).join('');
+      window.__lastCodes = out.join('\n');
+    }
+    else if (act === 'pay-copy') { try { await navigator.clipboard.writeText(window.__lastCodes || ''); if (App.toast) App.toast('授权码已复制', 'ok'); } catch (er) { if (App.toast) App.toast('请手动选中复制', 'err'); } }
+    else if (ok) {
+      const hrs = Number((document.getElementById('payHours2') || {}).value) || 6;
+      const r = await fetch('api/pay/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ok, key: k, hours: hrs }) });
+      const j = await r.json();
+      if (j && j.ok) { if (App.toast) App.toast('已放行 ' + ok + '（' + j.hours + ' 小时）· 客户端会自动进入', 'ok'); }
+      load();
+    } else if (no) {
+      await fetch('api/pay/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: no, key: k }) });
+      load();
+    }
+  });
+  load();
+  __payTimer = setInterval(load, 5000);
+};
+
 /* ============================== 帮助 ============================== */
 App.views.help = async function () {
   const flow = Guide.steps.map(function (s) {
