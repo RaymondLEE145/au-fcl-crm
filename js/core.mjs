@@ -75,6 +75,7 @@ const App = {
     offline: false,
     online: null,
     fileMode: (typeof location !== 'undefined' && location.protocol === 'file:'),
+    everOnline: false,
     busy: 0,
     flow: { customerId: null, step: 1, cargo: null, recommendation: null, quote: null, dirty: false },
     backups: [],
@@ -249,19 +250,33 @@ const Offline = {
   }
 };
 
-/* 与服务端的连接状态 */
+/* 与服务端的连接状态
+   · 全栈模式：连上本机 Node 服务（server.cjs）→ 数据落盘 data/db.json + 自动快照
+   · 单机/在线模式：没有服务 → 数据存在浏览器里，功能照常，只是不落盘、不快照 */
 App.setOnline = function (online) {
   const changed = App.state.online !== online;
   App.state.online = online;
   App.state.offline = !online;
+  if (online) App.state.everOnline = true;
+  const localLabel = App.state.fileMode ? '单机模式（数据存浏览器）' : '在线版（数据存浏览器）';
   const chip = $('#connChip');
   if (chip) {
     chip.className = 'conn-chip ' + (online ? 'on' : 'off');
-    chip.innerHTML = '<i></i>' + (online ? '全栈模式（Node 服务已连接）' : (App.state.fileMode ? '单机模式（免安装 · 数据存本机浏览器）' : '离线模式（数据存本机浏览器）'));
-    chip.title = online ? '数据实时保存到 data/db.json，并自动快照到 data/backups/' : '未连接 Node 服务：数据保存在浏览器本地，功能不受影响；如需自动快照与一键 PDF，可双击「启动系统.cmd」';
+    chip.innerHTML = '<i></i>' + (online ? '全栈模式（本机服务已连接）' : localLabel);
+    chip.title = online
+      ? '数据实时保存到本机 data/db.json，并自动快照到 data/backups/'
+      : (App.state.fileMode
+        ? '数据保存在本机浏览器里（不会丢，但换浏览器就看不到）。想要「文件保存 + 自动备份 + 一键出 PDF」，请双击 启动系统.cmd'
+        : '在线版的数据保存在你自己的浏览器里，不上传服务器。换电脑请用「备份中心 → 导出整库 JSON」');
   }
   if (changed && !online) {
-    Toast.show('后端未连接，已切换离线模式：数据暂存浏览器本地', 'warn', 6000);
+    if (App.state.everOnline) {
+      Toast.warn('与本机服务的连接已断开，已切回本机模式：数据暂存浏览器本地', 6000);
+    } else if (App.state.fileMode) {
+      Toast.info('单机模式：数据存在本机浏览器里。需要「文件保存 + 自动备份 + 一键出 PDF」时，双击「启动系统.cmd」', 8000);
+    } else {
+      Toast.info('在线版：数据保存在你自己的浏览器里，不上传服务器。换电脑请用「备份中心 → 导出整库 JSON」', 8000);
+    }
   }
 };
 

@@ -9,7 +9,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#3C2E22">
 <meta name="mobile-web-app-capable" content="yes">
-<link rel="stylesheet" href="css/crm.css?v=20261016g">
+<link rel="stylesheet" href="css/crm.css?v=20261016h">
 <script>
 /* 运行期错误收集（诊断用，不影响业务） */
 window.__errs = [];
@@ -101,23 +101,23 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
       <span class="sb-sep">|</span>
       <span>PDF：<b id="sbPdf">检测中…</b></span>
       <span class="spacer"></span>
-      <span class="sb-hint">数据实时落盘 + 自动快照 · 离线可用</span>
+      <span class="sb-hint" id="sbHint">检测中…</span>
     </footer>
   </main>
 </div>
 <div id="toastBox" class="toast-box"></div>
 
-<script src="js/auth-config.mjs?v=20261016g"></script>
-<script src="js/auth.mjs?v=20261016g"></script>
-<script src="js/au-data.mjs?v=20261016g"></script>
-<script src="js/au-model.mjs?v=20261016g"></script>
-<script src="js/logo.mjs?v=20261016g"></script>
-<script src="js/domain.mjs?v=20261016g"></script>
-<script src="js/core.mjs?v=20261016g"></script>
-<script src="js/views.mjs?v=20261016g"></script>
-<script src="js/flow.mjs?v=20261016g"></script>
-<script src="js/pdfdoc.mjs?v=20261016g"></script>
-<script src="js/app.mjs?v=20261016g"></script>
+<script src="js/auth-config.mjs?v=20261016h"></script>
+<script src="js/auth.mjs?v=20261016h"></script>
+<script src="js/au-data.mjs?v=20261016h"></script>
+<script src="js/au-model.mjs?v=20261016h"></script>
+<script src="js/logo.mjs?v=20261016h"></script>
+<script src="js/domain.mjs?v=20261016h"></script>
+<script src="js/core.mjs?v=20261016h"></script>
+<script src="js/views.mjs?v=20261016h"></script>
+<script src="js/flow.mjs?v=20261016h"></script>
+<script src="js/pdfdoc.mjs?v=20261016h"></script>
+<script src="js/app.mjs?v=20261016h"></script>
 <script>
 /* 顶栏状态同步（不侵入业务逻辑） */
 (function () {
@@ -133,6 +133,10 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
       : '全栈在线（Node 服务 + db.json）';
     if (sfB) sfB.textContent = (st.stats && st.stats.backups !== undefined) ? (st.stats.backups + ' 份快照') : '—';
     if (sfD) sfD.textContent = local ? '浏览器本地' : 'data/db.json';
+    var hint = document.getElementById('sbHint');
+    if (hint) hint.textContent = local
+      ? '数据存浏览器本地 · 建议定期「导出整库 JSON」备份'
+      : '数据实时落盘 data/db.json + 自动快照 data/backups';
     if (pdf) {
       fetch('api/health').then(function (r) { return r.json(); }).then(function (h) {
         pdf.textContent = h.pdfReady ? 'Edge 无头渲染可用' : '浏览器打印模式';
