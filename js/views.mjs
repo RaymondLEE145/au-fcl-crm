@@ -523,6 +523,7 @@ App.views.pay = async function () {
     card('① 在线频道（你的“在线密钥”）', '客户与你的手机靠这个频道通信；客户页面已内置同一个频道，无需客户填写',
       '<div class="form-row"><label>频道 / 在线密钥</label><input id="payCh" class="input" value="' + esc(chNow) + '" style="max-width:340px"></div>' +
       '<div class="btn-row"><button class="btn primary" data-act="pay-savech">保存并订阅</button>' +
+      '<button class="btn ghost" data-act="pay-gench">🎲 生成随机长频道（更安全）</button>' +
       '<button class="btn ghost" data-act="pay-copych">复制频道</button>' +
       '<button class="btn ghost" data-act="pay-custlink">复制客户链接（含频道）</button>' +
       '<span class="pay-badge" id="payChState">订阅中…</span></div>' +
@@ -588,6 +589,16 @@ App.views.pay = async function () {
     const act = t.getAttribute('data-act'), ok = t.getAttribute('data-payok'), no = t.getAttribute('data-payno');
     const hrs = Number((document.getElementById('payHours2') || {}).value) || 6;
     if (act === 'pay-savech') { R.setCh(chEl.value); if (App.toast) App.toast('频道已保存，正在重新订阅…', 'ok'); App.views.pay(); }
+    else if (act === 'pay-gench') {
+      var arr = new Uint8Array(16);
+      try { (window.crypto || {}).getRandomValues(arr); } catch (er) { for (var qi = 0; qi < 16; qi++) arr[qi] = Math.floor(Math.random() * 256); }
+      var rnd = '';
+      for (var wi = 0; wi < arr.length; wi++) rnd += ('0' + arr[wi].toString(36)).slice(-2);
+      var nch = 'aufcl-' + rnd.slice(0, 30);
+      R.setCh(nch);
+      if (App.toast) App.toast('已生成新频道，请用「复制客户链接（含频道）」重新发给客户', 'ok');
+      App.views.pay();
+    }
     else if (act === 'pay-copych' || act === 'pay-copytopic') { try { await navigator.clipboard.writeText(R.ch()); if (App.toast) App.toast('频道已复制：' + R.ch(), 'ok'); } catch (er) { if (App.toast) App.toast('请手动复制：' + R.ch(), 'err'); } }
     else if (act === 'pay-custlink') { const u = (R.pageUrl() || '').replace('#/pay', '') + '?ch=' + R.ch(); try { await navigator.clipboard.writeText(u); if (App.toast) App.toast('客户链接已复制（含频道）', 'ok'); } catch (er) { if (App.toast) App.toast(u, 'err'); } }
     else if (act === 'pay-refresh') { R.poll(3600).then(function (l) { l.forEach(function (m) { onMsg(m, false); }); }); }
