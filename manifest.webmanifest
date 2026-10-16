@@ -1,0 +1,26 @@
+{
+  "name": "澳洲 FCL 客户管理系统",
+  "short_name": "AU FCL CRM",
+  "description": "澳洲整柜客户管理：客户建档 / 3D 智能装柜 / 方案推荐 / 整柜报价 / 满版 PDF 导出",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#FAF7F2",
+  "theme_color": "#3C2E22",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
