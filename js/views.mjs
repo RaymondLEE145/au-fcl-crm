@@ -465,6 +465,36 @@ App.views.settings = async function () {
         '<li class="pt info"><b>离线模式下</b>清空只影响浏览器本地数据。</li></ul>'));
 };
 
+/* ============================== 澳洲进口清关要求 ============================== */
+App.views.clearance = async function (r) {
+  const q0 = (r && r.args && r.args[0]) ? decodeURIComponent(r.args[0]) : '';
+  const A = window.AUCL;
+  const ups = (A && A.meta && A.meta.updates) || [];
+  const upHtml = ups.length ? '<div class="cl-box" style="margin-bottom:14px"><div class="cl-hd">2025–2026 澳洲清关最新动态 <span class="cl-sub">来源：ABF / DAFF / AICIS 官方公告</span></div>' +
+      ups.map(function (u) { return '<div class="cl-card"><div class="cl-h"><span class="cl-code">' + esc(u.d) + '</span><span class="cl-t" style="font-size:13px;font-weight:500">' + esc(u.zh) + '</span>' +
+        '<a class="cl-more" href="' + esc(u.src) + '" target="_blank" rel="noopener">官方来源</a></div></div>'; }).join('') + '</div>' : '';
+  setMain(pageHead('澳洲进口清关要求', (A ? A.meta.count + ' 个条目 / ' + (A.entries || []).reduce(function (s, e) { return s + (e.tagsZh || []).length; }, 0) + ' 个品名标签' : '') + ' · 完整嵌入原文 + 品名自动识别',
+      '<button class="btn primary" data-act="cl-open">在新窗口打开完整指南</button>') +
+    upHtml +
+    card('品名自动识别', '输入中文或英文品名（箱单/唛头上的叫法即可），自动定位对应的澳洲进口清关要求',
+      '<div class="form-row"><label>产品品名</label><input id="clQ" class="input" placeholder="例：实木餐桌 / 石英石台面 / Lithium battery / Bamboo furniture" value="' + esc(q0) + '"></div>' +
+      '<div id="clHits"></div>') +
+    card('完整清关指南（原文嵌入）', '与客户提供的源文件逐字一致，支持全文检索与中英切换',
+      '<iframe id="clFrame" src="modules/clearance.html" style="width:100%;height:80vh;border:1px solid var(--line,#E5DDCB);border-radius:10px;background:#fff"></iframe>'));
+  const inp = document.getElementById('clQ');
+  const box = document.getElementById('clHits');
+  const run = function () {
+    if (!box) return;
+    if (!A) { box.innerHTML = '<div class="cl-none">清关识别引擎未加载</div>'; return; }
+    const val = inp ? String(inp.value || '').trim() : '';
+    if (!val) { box.innerHTML = '<div class="cl-none">输入品名后自动显示对应清关要求；留空可浏览下方完整指南。</div>'; return; }
+    const m = A.match(val, { limit: 5 });
+    box.innerHTML = '<div class="cl-box"><div class="cl-hd">识别结果 <span class="cl-sub">命中 ' + m.length + ' 条</span></div>' + A.render(m, { lang: 'zh' }) + '</div>';
+  };
+  if (inp) inp.addEventListener('input', debounce(run, 240));
+  run();
+};
+
 /* ============================== 帮助 ============================== */
 App.views.help = async function () {
   const flow = Guide.steps.map(function (s) {

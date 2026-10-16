@@ -7,6 +7,8 @@
 App.actions = App.actions || {};
 function bindActions() {
   document.addEventListener('click', function (e) {
+  var clb = e.target.closest && e.target.closest('[data-act="cl-open"]');
+  if (clb) { window.open('modules/clearance.html', '_blank'); return; }
     const t = e.target.closest('[data-act]');
     if (!t) return;
     const name = t.dataset.act;

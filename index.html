@@ -60,6 +60,7 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
       <button class="nav-item active" data-nav="dashboard"><span class="ni">🏠</span><span class="nt">工作台</span></button>
       <button class="nav-item" data-nav="flow"><span class="ni">🧭</span><span class="nt">引导式建档</span><span class="badge-new">5 步</span></button>
       <button class="nav-item" data-nav="customers"><span class="ni">👥</span><span class="nt">客户管理</span></button>
+      <button class="nav-item" data-nav="clearance"><span class="ni">🛃</span><span class="nt">清关要求</span><span class="badge-new">品名识别</span></button>
       <div class="nav-group">数据</div>
       <button class="nav-item" data-nav="backup"><span class="ni">🛡</span><span class="nt">备份中心</span></button>
       <button class="nav-item" data-nav="export"><span class="ni">📄</span><span class="nt">导出中心</span></button>
@@ -114,6 +115,31 @@ window.addEventListener('unhandledrejection', function (e) { try { window.__errs
 <script src="js/logo.mjs?v=20261016h"></script>
 <script src="js/domain.mjs?v=20261016h"></script>
 <script src="js/core.mjs?v=20261016h"></script>
+<script src="js/clearance.mjs?v=20261020a"></script>
+<style id="aucl-css">
+.cl-wrap{margin-top:12px}
+.cl-box{border:1px solid #E5DDCB;border-radius:10px;overflow:hidden;background:#FDFBF6}
+.cl-hd{padding:9px 13px;background:#F7F0DE;font-size:13px;font-weight:600;color:#9C7C3D;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cl-hd .cl-sub{font-weight:400;font-size:11.5px;color:#9C9486}
+.cl-card{border-top:1px solid #EFE9DC;padding:10px 13px;background:#fff}
+.cl-card.cl-crit{background:#FBF1EE;box-shadow:inset 3px 0 0 #C24E36}
+.cl-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.cl-code{font-size:11px;color:#9C9486}
+.cl-t{font-size:14px;font-weight:600;color:#191713}
+.cl-risk{font-size:11px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;border-radius:999px;padding:1px 8px}
+.cl-card.cl-crit .cl-risk{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
+.cl-hit{font-size:11px;color:#9C9486}
+.cl-more{margin-left:auto;font-size:12px;color:#9C7C3D;text-decoration:none;border-bottom:1px dashed #D4B978}
+.cl-f{display:flex;gap:8px;font-size:12.5px;line-height:1.65;margin-top:4px}
+.cl-l{flex:0 0 62px;color:#9C7C3D;font-weight:600}
+.cl-v{color:#3D3932;flex:1}
+.cl-ul{margin:3px 0 0 16px;padding:0;color:#3D3932;font-size:12.5px}
+.cl-none{font-size:12.5px;color:#6E675B;background:#F8F4EC;border:1px dashed #E5DDCB;border-radius:8px;padding:10px 13px;margin-top:10px}
+.cl-none a{color:#9C7C3D}
+.cl-prod{margin:12px 0 0;font-size:13px;font-weight:700;color:#191713;border-left:3px solid #D4B978;padding-left:8px}
+.cl-badge{display:inline-block;font-size:10px;line-height:16px;padding:0 6px;border-radius:999px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;margin-left:4px;vertical-align:middle}
+.cl-badge.crit{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
+</style>
 <script src="js/views.mjs?v=20261016h"></script>
 <script src="js/flow.mjs?v=20261016h"></script>
 <script src="js/pdfdoc.mjs?v=20261016h"></script>

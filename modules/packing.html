@@ -277,6 +277,30 @@ tbody input:focus,tbody select:focus{background:#fff;border-color:var(--aurora-2
 .zone-row .zp{color:var(--text-2);}
 .zone-row .zv{font-weight:600;font-family:"SF Mono",Consolas,monospace;color:var(--gold-1);text-align:right;}
 </style>
+<style id="aucl-css">
+.cl-wrap{margin-top:12px}
+.cl-box{border:1px solid #E5DDCB;border-radius:10px;overflow:hidden;background:#FDFBF6}
+.cl-hd{padding:9px 13px;background:#F7F0DE;font-size:13px;font-weight:600;color:#9C7C3D;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cl-hd .cl-sub{font-weight:400;font-size:11.5px;color:#9C9486}
+.cl-card{border-top:1px solid #EFE9DC;padding:10px 13px;background:#fff}
+.cl-card.cl-crit{background:#FBF1EE;box-shadow:inset 3px 0 0 #C24E36}
+.cl-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.cl-code{font-size:11px;color:#9C9486}
+.cl-t{font-size:14px;font-weight:600;color:#191713}
+.cl-risk{font-size:11px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;border-radius:999px;padding:1px 8px}
+.cl-card.cl-crit .cl-risk{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
+.cl-hit{font-size:11px;color:#9C9486}
+.cl-more{margin-left:auto;font-size:12px;color:#9C7C3D;text-decoration:none;border-bottom:1px dashed #D4B978}
+.cl-f{display:flex;gap:8px;font-size:12.5px;line-height:1.65;margin-top:4px}
+.cl-l{flex:0 0 62px;color:#9C7C3D;font-weight:600}
+.cl-v{color:#3D3932;flex:1}
+.cl-ul{margin:3px 0 0 16px;padding:0;color:#3D3932;font-size:12.5px}
+.cl-none{font-size:12.5px;color:#6E675B;background:#F8F4EC;border:1px dashed #E5DDCB;border-radius:8px;padding:10px 13px;margin-top:10px}
+.cl-none a{color:#9C7C3D}
+.cl-prod{margin:12px 0 0;font-size:13px;font-weight:700;color:#191713;border-left:3px solid #D4B978;padding-left:8px}
+.cl-badge{display:inline-block;font-size:10px;line-height:16px;padding:0 6px;border-radius:999px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;margin-left:4px;vertical-align:middle}
+.cl-badge.crit{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
+</style>
 </head>
 <body>
 
@@ -343,6 +367,7 @@ tbody input:focus,tbody select:focus{background:#fff;border-color:var(--aurora-2
           </table>
         </div>
         <div class="summary-bar" id="cargoSummary"></div>
+        <div class="cl-wrap" id="clCargoBox"></div>
       </div>
       <div class="nav-bar">
         <span></span>
@@ -475,6 +500,7 @@ tbody input:focus,tbody select:focus{background:#fff;border-color:var(--aurora-2
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="../js/clearance.mjs?v=20261020a"></script>
 <script src="../vendor/three.min.mjs"></script>
 <script src="../vendor/OrbitControls.mjs"></script>
 <script src="../vendor/xlsx.full.min.mjs"></script>
@@ -6310,6 +6336,39 @@ function bindEvents(){
   if(document.readyState==='complete'){ setTimeout(announce,0); }
   else { window.addEventListener('load',function(){ setTimeout(announce,0); },false); }
 })();
+
+/* ===== 澳洲进口清关要求 · 箱单品名自动识别 ===== */
+function clCargoUpdate(){
+  var host = document.getElementById('clCargoBox');
+  if (!host) return;
+  var rows = [];
+  try { rows = readCargoFromTable(); } catch(e) { rows = []; }
+  var names = [], seen = {};
+  for (var i = 0; i < rows.length; i++){
+    var nm = String((rows[i] && rows[i].name) || '').trim();
+    if (!nm || seen[nm]) continue;
+    seen[nm] = 1; names.push(nm);
+  }
+  if (!names.length){ host.innerHTML = ''; return; }
+  if (!window.AUCL){ host.innerHTML = '<div class="cl-none">清关识别引擎未加载（../js/clearance.mjs）</div>'; return; }
+  var lang = (typeof LANG !== 'undefined' && LANG) ? LANG : 'zh';
+  var html = '', matched = 0;
+  for (var j = 0; j < names.length; j++){
+    var m = AUCL.match(names[j], { limit: 2 });
+    if (!m.length) continue;
+    matched++;
+    html += '<div class="cl-prod">' + String(names[j]).replace(/[&<>]/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;'})[c]; }) + '</div>' + AUCL.render(m, { lang: lang });
+  }
+  var head = '<div class="cl-hd">澳洲进口清关要求 · 自动识别 <span class="cl-sub">已识别 ' + matched + ' / ' + names.length + ' 个品名 · 数据源：澳洲进口清关指南 2026</span></div>';
+  host.innerHTML = '<div class="cl-box">' + head + (matched ? html : '<div class="cl-none">当前品名均未匹配到专项清关要求 —— 按普货申报（仍需发票 / 装箱单 / 提单 / 原产地证）。</div>') + '</div>';
+}
+function clCargoDebounced(){ clearTimeout(window.__clT); window.__clT = setTimeout(clCargoUpdate, 320); }
+document.addEventListener('DOMContentLoaded', function(){
+  var tb = document.getElementById('cargoTbody');
+  if (tb){ tb.addEventListener('input', clCargoDebounced); tb.addEventListener('change', clCargoDebounced); }
+  var b = document.getElementById('toStep2');
+  setTimeout(clCargoUpdate, 400);
+});
 </script>
 </body>
 </html>

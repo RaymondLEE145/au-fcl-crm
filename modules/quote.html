@@ -6,6 +6,7 @@
 <base target="_self">
 <title>FCL 整柜自动报价 · 澳洲FCL客户管理系统</title>
 <script src="../vendor/exceljs.min.mjs"></script>
+<script src="../js/clearance.mjs?v=20261020a"></script>
 <style>
 :root{
   --bg:#FAF7F2; --card:#FFFFFF; --border:#E8DDD0; --border-soft:#F0EBE3;
@@ -217,6 +218,30 @@ table.mat tr.grp td{background:#F7F1E7;font-weight:700;text-align:left;color:var
 #auResult .auc-range{margin-top:8px;font-size:13px}
 #auResult .auc-warn{margin-top:8px;font-size:12.5px;color:#C0392B}
 #auResult .auc-good{margin-top:10px;font-size:13px;background:#F2F8F4;border:1px solid #CFE3D6;border-radius:6px;padding:10px 12px;color:#2E7D51}
+</style>
+<style id="aucl-css">
+.cl-wrap{margin-top:12px}
+.cl-box{border:1px solid #E5DDCB;border-radius:10px;overflow:hidden;background:#FDFBF6}
+.cl-hd{padding:9px 13px;background:#F7F0DE;font-size:13px;font-weight:600;color:#9C7C3D;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cl-hd .cl-sub{font-weight:400;font-size:11.5px;color:#9C9486}
+.cl-card{border-top:1px solid #EFE9DC;padding:10px 13px;background:#fff}
+.cl-card.cl-crit{background:#FBF1EE;box-shadow:inset 3px 0 0 #C24E36}
+.cl-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.cl-code{font-size:11px;color:#9C9486}
+.cl-t{font-size:14px;font-weight:600;color:#191713}
+.cl-risk{font-size:11px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;border-radius:999px;padding:1px 8px}
+.cl-card.cl-crit .cl-risk{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
+.cl-hit{font-size:11px;color:#9C9486}
+.cl-more{margin-left:auto;font-size:12px;color:#9C7C3D;text-decoration:none;border-bottom:1px dashed #D4B978}
+.cl-f{display:flex;gap:8px;font-size:12.5px;line-height:1.65;margin-top:4px}
+.cl-l{flex:0 0 62px;color:#9C7C3D;font-weight:600}
+.cl-v{color:#3D3932;flex:1}
+.cl-ul{margin:3px 0 0 16px;padding:0;color:#3D3932;font-size:12.5px}
+.cl-none{font-size:12.5px;color:#6E675B;background:#F8F4EC;border:1px dashed #E5DDCB;border-radius:8px;padding:10px 13px;margin-top:10px}
+.cl-none a{color:#9C7C3D}
+.cl-prod{margin:12px 0 0;font-size:13px;font-weight:700;color:#191713;border-left:3px solid #D4B978;padding-left:8px}
+.cl-badge{display:inline-block;font-size:10px;line-height:16px;padding:0 6px;border-radius:999px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;margin-left:4px;vertical-align:middle}
+.cl-badge.crit{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
 </style>
 </head>
 <body class="lang-zh">
@@ -433,7 +458,8 @@ table.mat tr.grp td{background:#F7F1E7;font-weight:700;text-align:left;color:var
     <div class="panel" id="ddpPanel" style="margin-top:14px;display:none">
       <h3><span data-i18n="ddp_title">澳大利亚 DDP 进口税金</span> <span class="mini" data-i18n="ddp_sub">仅 DDP 模式显示 · 货值 / COO / GST</span></h3>
       <div class="grid4">
-        <div class="field"><label data-i18n="f_product">产品名称</label><input id="f_product" type="text"></div>
+        <div class="field"><label data-i18n="f_product">产品名称</label><input id="f_product" type="text" placeholder="输入品名，自动识别澳洲进口清关要求"></div>
+          <div class="field" style="grid-column:span 4;padding:0"><div class="cl-wrap" id="clQuoteBox"></div></div>
         <div class="field"><label data-i18n="f_goodsValue">产品货值（AUD）</label><input id="f_goodsValue" type="number" step="0.01" min="0"></div>
         <div class="field"><label data-i18n="f_coo">原产地证书 COO</label>
           <div class="inline" style="gap:12px;flex-wrap:wrap">
@@ -590,7 +616,7 @@ function defaultCfg(){
   return {
     meta:{ version:'8.0', updated:'2026-10-16' },
     fx:{ USD_RMB:6.6, AUD_RMB:4.58 },
-    tiers:[0.05,0.10,0.15,0.20],
+    tiers:[0.05,0.10,0.12,0.15,0.20],
     defaultTier:0.10,
     trucking:{
       minMargin:0.08, freeKm:30, roadFactor:1.28,
@@ -1969,7 +1995,8 @@ function bindEvents(){
     });
   });
   /* --- DDP 税费 --- */
-  on('f_product','input', e=>{ S.taxInfo.product = e.target.value; });
+  on('f_product','input', e=>{
+    clQuoteUpdate(); S.taxInfo.product = e.target.value; });
   on('f_goodsValue','input', e=>{ S.taxInfo.goods = e.target.value; renderDdpPanel(); renderFeeTable(); });
   on('f_cooYes','change', e=>{ if(e.target.checked){ S.taxInfo.coo = true; renderDdpPanel(); renderFeeTable(); } });
   on('f_cooNo','change', e=>{ if(e.target.checked){ S.taxInfo.coo = false; renderDdpPanel(); renderFeeTable(); } });
@@ -2058,7 +2085,7 @@ const ADM_EN = {
   '管理员 · 账号':'Admin · Account','管理员 · 密码':'Admin · Password','管理员 · 验证码':'Admin · Code',
   '汇率':'Exchange Rates','用于人民币 / 澳币 / 美金之间的全部换算。':'Used for every conversion between RMB, AUD and USD.',
   '默认 6.6':'default 6.6','默认 4.58':'default 4.58','默认利润率档位（小数）':'Default margin tier (decimal)','默认 0.10':'default 0.10',
-  '利润率档位（四个子页签）':'Margin Tiers (four sub-tabs)','报价 = 成本 ×（1 + 利润率）；四档同时展示，可任意修改数值。':'Quote = cost × (1 + margin); all four tiers are shown and freely editable.',
+  '利润率档位（五个子页签：5% / 10% / 12% / 15% / 20%）':'Margin Tiers (five sub-tabs: 5% / 10% / 12% / 15% / 20%)','报价 = 成本 ×（1 + 利润率）；四档同时展示，可任意修改数值。':'Quote = cost × (1 + margin); all four tiers are shown and freely editable.',
   '档位 ':'Tier ','拖车段利润下限':'Trucking Margin Floor','拖车利润率下限':'Trucking margin floor','拖车费利润率只高不低：低于该下限时按下限计。':'The trucking margin never drops below this floor.',
   '拖车利润率下限（小数）':'Trucking margin floor (decimal)','默认 0.08 = 8%':'default 0.08 = 8%',
   ' 条线路价':' lane rates','暂无线路价（将按起步价 + 里程计算）':'No lane rate yet (falls back to base rate + distance)',
@@ -2168,7 +2195,7 @@ function admTabHtml(tab){
       grid(F('1 USD = ? RMB','fx.USD_RMB',{hint:'默认 6.6'}) + F('1 AUD = ? RMB','fx.AUD_RMB',{hint:'默认 4.58'}) +
            F('默认利润率档位（小数）','defaultTier',{step:'0.01',hint:'默认 0.10'}), 3)) +
     SEC('利润率档位（四个子页签）','报价 = 成本 ×（1 + 利润率）；四档同时展示，可任意修改数值。',
-      grid(CFG.tiers.map((x,i)=>F(tr('档位 ') + (i+1), 'tiers.' + i, { step:'0.01' })).join(''), 4)) +
+      grid(CFG.tiers.map((x,i)=>F(tr('档位 ') + (i+1), 'tiers.' + i, { step:'0.01' })).join(''), 5)) +
     SEC('拖车段利润下限','拖车费利润率只高不低：低于该下限时按下限计。',
       grid(F('拖车利润率下限（小数）','trucking.minMargin',{step:'0.01',hint:'默认 0.08 = 8%'}), 4));
   if(tab === 'truck'){
@@ -3236,6 +3263,26 @@ document.addEventListener('DOMContentLoaded', init);
   /* 审计 / 自检用的最小句柄 */
   window.__aufclBridge = { module:MODULE, version:VERSION, ready:ready, loadQuote:loadQuote, quoteData:quoteData };
 })();
+
+/* ===== 澳洲进口清关要求 · 品名自动识别（数据源：澳洲产品进口清关要求.html 全量抽取） ===== */
+function clL(){ return (typeof S !== 'undefined' && S.lang) ? S.lang : 'zh'; }
+function clEsc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+function clBox(matches, title){
+  var head = '<div class="cl-hd">' + title + ' <span class="cl-sub">数据源：澳洲进口清关指南 2026 · 46 条 / 494 个品名标签</span></div>';
+  return '<div class="cl-box">' + head + (window.AUCL ? AUCL.render(matches, { lang: clL() }) : '') + '</div>';
+}
+function clQuoteUpdate(){
+  var host = document.getElementById('clQuoteBox');
+  if (!host) return;
+  var el = document.getElementById('f_product');
+  var v = el ? String(el.value || '').trim() : '';
+  if (!v){ host.innerHTML = ''; return; }
+  if (!window.AUCL){ host.innerHTML = '<div class="cl-none">清关识别引擎未加载（js/clearance.mjs）</div>'; return; }
+  var m = AUCL.match(v, { limit: 3 });
+  host.innerHTML = clBox(m, '澳洲进口清关要求 · 自动识别');
+}
+/* 初始化：进入模块时若已有品名立即识别一次 */
+setTimeout(function(){ try{ clQuoteUpdate(); }catch(e){} }, 300);
 </script>
 </body>
 </html>
