@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>澳洲 FCL 客户管理系统 | GlobalVertical</title>
+<link rel="icon" href="assets/logo.png">
+<link rel="apple-touch-icon" href="assets/icon-192.png">
+<meta name="theme-color" content="#3C2E22">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="stylesheet" href="css/crm.css?v=20261215a">
+<script>
+/* 运行期错误收集（诊断用，不影响业务） */
+window.__errs = [];
+window.addEventListener('error', function (e) { try { window.__errs.push((e.message || 'error') + ' @' + (e.filename || '') + ':' + (e.lineno || 0)); } catch (x) {} });
+window.addEventListener('unhandledrejection', function (e) { try { window.__errs.push('rejection: ' + String((e.reason && e.reason.message) || e.reason)); } catch (x) {} });
+</script>
+<style id="pay-gate-css">.lg-tabs{display:flex;gap:6px;margin:14px 0 16px;background:#F5EFE6;border-radius:9px;padding:4px}.lg-tabs .lg-tab{flex:1;border:none;background:none;padding:9px 6px;border-radius:7px;font-size:13.5px;font-weight:600;color:#7A6A5A;cursor:pointer}.lg-tabs .lg-tab.on{background:#fff;color:#9C7C3D;box-shadow:0 1px 3px rgba(0,0,0,.08)}.pay-head{text-align:center;font-size:14.5px;color:#3C2E22;margin-bottom:12px}.pay-head b{color:#9C7C3D;font-size:17px}.pay-qr{display:block;width:100%;max-width:300px;margin:0 auto 14px;border-radius:12px;border:1px solid #E5DDCB;box-shadow:0 6px 20px rgba(11,37,69,.10)}.pay-steps{background:#FBF7F0;border:1px solid #EFE9DC;border-radius:9px;padding:11px 13px;margin-bottom:14px}.pay-step{font-size:12.5px;color:#3D3932;line-height:1.75}.pay-step b{color:#9C7C3D}.pay-step+.pay-step{margin-top:6px}.lg-ghost{width:100%;margin-top:8px;background:#fff !important;color:#9C7C3D !important;border:1px solid #D4B978 !important}.pay-note{font-size:11.5px;color:#9C9486;line-height:1.7;margin-top:10px;text-align:center}.pass-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;color:#1B7F4B;background:#E6F4EC;border:1px solid #BFE3CE;border-radius:999px;padding:3px 10px}.pass-chip.warn{color:#B26A00;background:#FDF7E9;border-color:#EEDEB4}.pay-badge{font-size:11.5px;color:#9C9486}</style>
+<style id="wa-css">#waText{width:100%;min-height:190px;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.6;border:1px solid var(--line,#E5DDCB);border-radius:9px;padding:11px;background:#FDFBF6;resize:vertical}.wa-msg{display:flex;gap:9px;padding:7px 10px;border-radius:8px;margin-bottom:5px;cursor:pointer;border:1px solid transparent;font-size:13px;line-height:1.6}.wa-msg:hover{border-color:#E5DDCB}.wa-msg.them{background:#F4F7FB;border-color:#DCE6F2}.wa-msg.me{background:#F2F8F4;border-color:#CFE3D6}.wa-msg .who{flex:0 0 56px;font-weight:700;font-size:11.5px;color:#6E675B;padding-top:2px}.wa-msg.them .who{color:#2C5A8C}.wa-msg.me .who{color:#1B7F4B}.wa-msg .tx{flex:1;color:#191713}.wa-msg .tm{flex:0 0 auto;font-size:11px;color:#9C9486}.wa-kpi{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 12px}.wa-kpi .k{background:#FBF7F0;border:1px solid #E8DDD0;border-radius:8px;padding:8px 14px;min-width:104px}.wa-kpi .kl{font-size:11.5px;color:#9C9486}.wa-kpi .kv{font-size:16px;font-weight:700;color:#9C7C3D}.wa-tag{display:inline-block;font-size:12px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;border-radius:999px;padding:2px 10px;margin:0 6px 6px 0}.wa-tag.risk{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}.wa-tag.ok{background:#F2F8F4;border-color:#CFE3D6;color:#2E7D51}.wa-card{border:1px solid #E5DDCB;border-radius:10px;padding:11px 13px;margin-bottom:9px;background:#fff}.wa-card h5{margin:0 0 7px;font-size:12px;color:#9C7C3D;font-weight:700;letter-spacing:.3px}.wa-en{font-size:13.5px;line-height:1.72;color:#191713}.wa-zh{font-size:12px;color:#6E675B;margin-top:7px;padding-top:7px;border-top:1px dashed #EFE9DC;line-height:1.7}.wa-btn{background:#0B2545;color:#fff;border:none;border-radius:7px;padding:8px 15px;font-size:13px;cursor:pointer;font-weight:600}.wa-btn.ghost{background:#fff;color:#0B2545;border:1px solid #C7D2E0}.wa-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:9px}.wa-note{font-size:12px;color:#6E675B;background:#F8F4EC;border:1px dashed #E5DDCB;border-radius:8px;padding:9px 12px;margin-top:9px;line-height:1.7}</style>
+</head>
+<body>
+<div id="loginOverlay" class="show">
+  <div class="lg-card">
+    <img class="lg-logo" src="assets/logo.png" alt="GlobalVertical">
+    <div class="lg-title">澳洲 FCL 客户管理系统</div>
+    <div class="lg-sub">AUSTRALIA FCL · CUSTOMER MANAGEMENT</div>
+    <div class="lg-tabs">
+      <button type="button" class="lg-tab on" data-lgtab="acc">账号登录</button>
+      <button type="button" class="lg-tab" data-lgtab="pay">扫码付费进入</button>
+    </div>
+    <div id="lgPaneAcc">
+      <div class="lg-field">
+        <label for="lgUser">账 号</label>
+        <input id="lgUser" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="请输入账号">
+      </div>
+      <div class="lg-field">
+        <label for="lgPass">密 码</label>
+          <input id="lgPass" class="input" type="password" autocomplete="off" placeholder="请输入密码">
+      </div>
+      <div class="lg-field">
+        <label for="lgCaptcha">验证码</label>
+        <div class="lg-cap-row">
+          <input id="lgCaptcha" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="请输入右侧验证码">
+          <canvas id="lgCanvas" width="124" height="44" title="看不清？点一下换一张"></canvas>
+        </div>
+      </div>
+      <label class="lg-remember"><input type="checkbox" id="lgRemember" checked> 记住登录状态（12 小时内免登录）</label>
+      <button id="lgBtn" type="button">登 录</button>
+      <div class="lg-msg" id="lgMsg"></div>
+    </div>
+    <div id="lgPanePay" style="display:none">
+      <div class="pay-head">扫码支付 <b>¥6.66</b> · 单次授权 <b>6 小时</b></div>
+      <img class="pay-qr" src="img/pay-wechat.png" alt="微信收款码（Plutôt）">
+      <div class="pay-steps">
+        <div class="pay-step"><b>1</b> 用微信「扫一扫」支付 <b>¥6.66</b></div>
+        <div class="pay-step"><b>2</b> 付款成功后二选一：<br>· 点「我已支付，请求放行」→ 我方确认到账后自动进入（需运行服务端）<br>· 或输入我方发你的<b>授权码</b> → 立即可进入（任何模式都可用）</div>
+        <div class="pay-step"><b>3</b> 通行证 <b>6 小时</b>一次性有效，到期自动退出</div>
+      </div>
+      <div class="lg-field">
+        <label for="payCode">授权码</label>
+        <input id="payCode" class="input" type="text" autocomplete="off" spellcheck="false" placeholder="GV-XXXX-XXXX-XXXX">
+      </div>
+      <button id="payCodeBtn" type="button">用授权码进入</button>
+      <button id="payReqBtn" type="button" class="lg-ghost">我已支付，请求放行</button>
+      <div class="lg-msg" id="payMsg"></div>
+      <div class="pay-note">通行证到期只清通行证，<b>不会删除您的客户数据</b>（数据保存在本机）。再次付款即可继续。</div>
+    </div>
+    <div class="lg-foot">仅授权人员使用 · 登录后所有操作记录在本机数据文件 · 内容受保护</div>
+  </div>
+</div>
+
+<div id="app" class="locked">
+  <aside class="sidebar">
+    <div class="brand">
+      <img id="brandLogo" src="assets/logo.png" alt="GlobalVertical">
+      <div class="brand-txt">
+        <div class="brand-name">澳洲 FCL</div>
+        <div class="brand-sub" id="brandSub">客户管理系统</div>
+      </div>
+      <button class="nav-toggle" id="navToggle" title="折叠 / 展开侧栏">☰</button>
+    </div>
+    <nav class="nav">
+      <div class="nav-group">业务</div>
+      <button class="nav-item active" data-nav="dashboard"><span class="ni">🏠</span><span class="nt">工作台</span></button>
+      <button class="nav-item" data-nav="flow"><span class="ni">🧭</span><span class="nt">引导式建档</span><span class="badge-new">5 步</span></button>
+      <button class="nav-item" data-nav="customers"><span class="ni">👥</span><span class="nt">客户管理</span></button>
+      <button class="nav-item" data-nav="wa"><span class="ni">💬</span><span class="nt">沟通分析</span><span class="badge-new">AI</span></button>
+      <button class="nav-item" data-nav="delivery"><span class="ni">🚚</span><span class="nt">派送计费 2–7</span></button>
+      <button class="nav-item" data-nav="invoice"><span class="ni">🧾</span><span class="nt">FCL 发票</span></button>
+      <button class="nav-item" data-nav="files"><span class="ni">🗂</span><span class="nt">供应商与文件备份</span></button>
+      <button class="nav-item" data-nav="templates"><span class="ni">📄</span><span class="nt">澳洲文件模板</span></button>
+      <button class="nav-item" data-nav="access"><span class="ni">🚚</span><span class="nt">地址通行核验</span><span class="badge-new">AU</span></button>
+      <button class="nav-item" data-nav="packing"><span class="ni">🏗</span><span class="nt">3D 装柜</span><span class="badge-new">Pro</span></button>
+      <button class="nav-item" data-nav="mark"><span class="ni">📦</span><span class="nt">箱唛工具</span><span class="badge-new">Pro</span></button>
+      <button class="nav-item" data-nav="clearance"><span class="ni">🛃</span><span class="nt">清关要求</span><span class="badge-new">品名识别</span></button>
+      <div class="nav-group">数据</div>
+      <button class="nav-item" data-nav="backup"><span class="ni">🛡</span><span class="nt">备份中心</span></button>
+      <button class="nav-item" data-nav="export"><span class="ni">📄</span><span class="nt">导出中心</span></button>
+      <div class="nav-group">系统</div>
+      <button class="nav-item" data-nav="pay"><span class="ni">💳</span><span class="nt">付费放行</span></button>
+      <button class="nav-item" data-nav="settings"><span class="ni">⚙️</span><span class="nt">系统设置</span></button>
+      <button class="nav-item" data-nav="help"><span class="ni">❓</span><span class="nt">使用指南</span></button>
+    </nav>
+    <div class="side-foot">
+      <div class="sf-row"><span class="sf-k">数据</span><span class="sf-v" id="sfData">data/db.json</span></div>
+      <div class="sf-row"><span class="sf-k">备份</span><span class="sf-v" id="sfBackup">—</span></div>
+      <div class="sf-tip">按 <b>/</b> 搜索 · <b>Ctrl+S</b> 保存 · <b>Alt+→</b> 下一步</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="tb-left">
+        <div class="search-box">
+          <span class="sb-ico">🔍</span>
+          <input id="globalSearch" placeholder="搜索客户：公司 / 联系人 / 电话 / 邮编…（按 / 聚焦，回车搜索）">
+        </div>
+      </div>
+      <div class="tb-right">
+        <span class="pass-chip" id="passChip" style="display:none;margin-right:8px">⏱ 付费通行</span>
+        <span class="conn-chip" id="connChip"><i></i>连接中…</span>
+        <span class="who">👤 <b id="whoUser">784654946</b></span>
+        <button class="btn ghost tiny" id="logoutBtn" title="退出登录">退出</button>
+        <button class="btn ghost tiny" id="guideBtn">使用引导</button>
+        <button class="btn ghost tiny" id="seedBtn">示例数据</button>
+        <button class="btn primary" data-act="flow-new">＋ 新建客户</button>
+      </div>
+    </header>
+    <div class="main-scroll" id="mainScroll">
+      <div id="mainView"></div>
+    </div>
+    <footer class="statusbar">
+      <span>GlobalVertical · 澳洲整柜 FCL 客户管理系统 v1.0</span>
+      <span class="sb-sep">|</span>
+      <span>运行模式：<b id="sbMode">检测中…</b></span>
+      <span class="sb-sep">|</span>
+      <span>PDF：<b id="sbPdf">检测中…</b></span>
+      <span class="spacer"></span>
+      <span class="sb-hint" id="sbHint">检测中…</span>
+    </footer>
+  </main>
+</div>
+<div id="toastBox" class="toast-box"></div>
+
+<script src="js/protect.mjs?v=20261215a"></script>
+  <script src="js/auth-config.mjs?v=20261215a"></script>
+<script src="js/wa-engine.mjs?v=20261215a"></script>
+<script src="js/wa-ai.mjs?v=20261215a"></script>
+<script src="js/wa-ocr.mjs?v=20261215a"></script>
+<script src="js/wa-lib.mjs?v=20261215a"></script>
+<script src="js/wa-recs.mjs?v=20261215a"></script>
+<script src="js/wa-report.mjs?v=20261215a"></script>
+<script src="js/paypass.mjs?v=20261215a"></script>
+<script src="js/payrelay.mjs?v=20261215a"></script>
+<script src="js/auth.mjs?v=20261215a"></script>
+<script src="js/au-data.mjs?v=20261215a"></script>
+<script src="js/au-model.mjs?v=20261215a"></script>
+<script src="js/logo.mjs?v=20261215a"></script>
+<script src="js/domain.mjs?v=20261215a"></script>
+<script src="js/core.mjs?v=20261215a"></script>
+<script src="js/clearance.mjs?v=20261215a"></script>
+<style id="aucl-css">
+.cl-wrap{margin-top:12px}
+.cl-box{border:1px solid #E5DDCB;border-radius:10px;overflow:hidden;background:#FDFBF6}
+.cl-hd{padding:9px 13px;background:#F7F0DE;font-size:13px;font-weight:600;color:#9C7C3D;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cl-hd .cl-sub{font-weight:400;font-size:11.5px;color:#9C9486}
+.cl-card{border-top:1px solid #EFE9DC;padding:10px 13px;background:#fff}
+.cl-card.cl-crit{background:#FBF1EE;box-shadow:inset 3px 0 0 #C24E36}
+.cl-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+.cl-code{font-size:11px;color:#9C9486}
+.cl-t{font-size:14px;font-weight:600;color:#191713}
+.cl-risk{font-size:11px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;border-radius:999px;padding:1px 8px}
+.cl-card.cl-crit .cl-risk{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
+.cl-hit{font-size:11px;color:#9C9486}
+.cl-more{margin-left:auto;font-size:12px;color:#9C7C3D;text-decoration:none;border-bottom:1px dashed #D4B978}
+.cl-f{display:flex;gap:8px;font-size:12.5px;line-height:1.65;margin-top:4px}
+.cl-l{flex:0 0 62px;color:#9C7C3D;font-weight:600}
+.cl-v{color:#3D3932;flex:1}
+.cl-ul{margin:3px 0 0 16px;padding:0;color:#3D3932;font-size:12.5px}
+.cl-none{font-size:12.5px;color:#6E675B;background:#F8F4EC;border:1px dashed #E5DDCB;border-radius:8px;padding:10px 13px;margin-top:10px}
+.cl-none a{color:#9C7C3D}
+.cl-prod{margin:12px 0 0;font-size:13px;font-weight:700;color:#191713;border-left:3px solid #D4B978;padding-left:8px}
+.cl-badge{display:inline-block;font-size:10px;line-height:16px;padding:0 6px;border-radius:999px;background:#FDF7E9;border:1px solid #EEDEB4;color:#A87428;margin-left:4px;vertical-align:middle}
+.cl-badge.crit{background:#FBF1EE;border-color:#EFD3C8;color:#9B3B28}
+</style>
+<script src="js/views.mjs?v=20261215a"></script>
+<script src="js/flow.mjs?v=20261215a"></script>
+<script src="js/pdfdoc.mjs?v=20261215a"></script>
+<script src="js/app.mjs?v=20261215a"></script>
+<script src="js/paygate.mjs?v=20261215a"></script>
+<script src="js/followups.mjs?v=20261215a"></script>
+<script>
+/* 顶栏状态同步（不侵入业务逻辑） */
+(function () {
+  function sync() {
+    var st = App.state;
+    var mode = document.getElementById('sbMode');
+    var pdf = document.getElementById('sbPdf');
+    var sfB = document.getElementById('sfBackup');
+    var sfD = document.getElementById('sfData');
+    var local = !!(st.offline || st.fileMode);
+    if (mode) mode.textContent = local
+      ? (st.fileMode ? '在线版 / 单机模式（数据存本机浏览器）' : '在线版（数据存本机浏览器，无后端）')
+      : '全栈在线（Node 服务 + db.json）';
+    if (sfB) sfB.textContent = (st.stats && st.stats.backups !== undefined) ? (st.stats.backups + ' 份快照') : '—';
+    if (sfD) sfD.textContent = local ? '浏览器本地' : 'data/db.json';
+    var hint = document.getElementById('sbHint');
+    if (hint) hint.textContent = local
+      ? '数据存浏览器本地 · 建议定期「导出整库 JSON」备份'
+      : '数据实时落盘 data/db.json + 自动快照 data/backups';
+    if (pdf) {
+      fetch('api/health').then(function (r) { return r.json(); }).then(function (h) {
+        pdf.textContent = h.pdfReady ? 'Edge 无头渲染可用' : '浏览器打印模式';
+      }).catch(function () { pdf.textContent = '浏览器打印模式'; });
+    }
+  }
+  document.addEventListener('DOMContentLoaded', function () { setTimeout(sync, 900); });
+  document.addEventListener('app:ready', function () { setTimeout(sync, 60); });
+  window.addEventListener('hashchange', function () { setTimeout(sync, 700); });
+  setInterval(sync, 20000);
+})();
+</script>
+<script>
+/* PWA：仅在 https（真网站）下注册 Service Worker，本地 file:// 不注册 */
+/* ⛔ 已停用离线缓存与「安装/下载桌面版」能力（PWA 已移除）：
+   这里主动注销已有的 service worker 并清空缓存，确保之前装过桌面版的用户也被清理。 */
+if ('serviceWorker' in navigator) {
+  try {
+    navigator.serviceWorker.getRegistrations().then(function (rs) {
+      (rs || []).forEach(function (r) { try { r.unregister(); } catch (e) {} });
+    }).catch(function () {});
+    if (window.caches && caches.keys) {
+      caches.keys().then(function (ks) { (ks || []).forEach(function (k) { try { caches.delete(k); } catch (e) {} }); }).catch(function () {});
+    }
+  } catch (e) {}
+}
+}
+</script>
+</body>
+</html>

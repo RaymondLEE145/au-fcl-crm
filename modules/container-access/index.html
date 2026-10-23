@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Container Access AU — Australian Container Delivery &amp; Drop-Off Checker</title>
+<meta name="description" content="Free Australian address pre-screen for shipping container truck access and container drop-off. Checks street access, clearances, powerlines, slope, drop-zone dimensions and permits.">
+<meta name="theme-color" content="#080d17">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Container Access AU — 澳洲集装箱落柜通行核验">
+<meta property="og:description" content="输入澳洲地址，1 分钟判断集装箱卡车能否进入、能否落柜，并给出推荐设备与现场核验报告。">
+<meta property="og:image" content="shots/final-home.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="robots" content="index, follow">
+<link rel="stylesheet" href="assets/css/app.css?v=22">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b1526'/%3E%3Crect x='10' y='22' width='44' height='22' rx='2' fill='%23ff8a3d'/%3E%3Cpath d='M14 27h8v12h-8zM26 27h8v12h-8zM38 27h8v12h-8z' fill='%230b1526' opacity='.55'/%3E%3C/svg%3E">
+</head>
+<body>
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <symbol id="i-container" viewBox="0 0 24 24"><path d="M3 7h18v10H3z" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M7 7v10M11 7v10M15 7v10M19 7v10" stroke="currentColor" stroke-width="1.2" opacity=".55"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 6h11v10H2zM13 9h5l3 3v4h-8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="6" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="17.5" cy="18" r="1.8" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m15.5 15.5 5 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-warning" viewBox="0 0 24 24"><path d="M12 3 2.5 20h19z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 9v5M12 17.2v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12.5 5 5L20 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v6M12 7.2v.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3h10v6M7 18H4V9h16v9h-3" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M7 14h10v7H7z" fill="none" stroke="currentColor" stroke-width="1.7"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 20h16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5zM3 13l9 5 9-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4h7a3 3 0 0 1 3 3v13a2.5 2.5 0 0 0-2.5-2.5H4zM20 4h-3a3 3 0 0 0-3 3v13a2.5 2.5 0 0 1 2.5-2.5H20z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="i-batch" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="19" cy="18" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 6.3M20 4v7h-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 3h11l3 3v15H5z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8 3v6h7V3M8 21v-7h8v7" fill="none" stroke="currentColor" stroke-width="1.4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 4.5 3.4 7.6 8 9 4.6-1.4 8-4.5 8-9V6z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="m8.5 12 2.3 2.3 4.7-4.7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="brand" href="#" id="brandHome">
+      <span class="brand-mark"><svg><use href="#i-container"/></svg></span>
+      <span class="brand-text"><strong>CONTAINER ACCESS <em>AU</em></strong><small>澳洲集装箱落柜通行核验</small></span>
+    </a>
+    <nav class="topnav">
+      <button class="nav-btn" data-modal="guide"><svg><use href="#i-book"/></svg><span data-i18n="nav.guide">Guide</span></button>
+      <button class="nav-btn" data-modal="sources"><svg><use href="#i-shield"/></svg><span data-i18n="nav.sources">Standards</span></button>
+      <button class="nav-btn" data-modal="batch"><svg><use href="#i-batch"/></svg><span data-i18n="nav.batch">Batch</span></button>
+      <button class="nav-btn" data-modal="saved"><svg><use href="#i-save"/></svg><span data-i18n="nav.saved">Saved</span><span class="count-pill" id="savedCount">0</span></button>
+    </nav>
+    <div class="topbar-right">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open menu" aria-expanded="false">
+        <svg><use href="#i-batch"/></svg>
+      </button>
+      <div class="api-status" id="apiStatus" title="Free API status"><span class="dot"></span><span class="api-status-text">Checking APIs…</span></div>
+      <button class="lang-toggle" id="langToggle" title="English / 中文"><svg><use href="#i-globe"/></svg><span id="langLabel">中文</span></button>
+    </div>
+  </div>
+</header>
+<div class="mobile-menu" id="mobileMenu" hidden>
+  <button class="mobile-menu-item" data-modal="github"><svg><use href="#i-layers"/></svg><span data-i18n="nav.github">GitHub Pages</span></button>
+  <button class="mobile-menu-item" data-modal="guide"><svg><use href="#i-book"/></svg><span data-i18n="nav.guide">Guide</span></button>
+  <button class="mobile-menu-item" data-modal="sources"><svg><use href="#i-shield"/></svg><span data-i18n="nav.sources">Standards</span></button>
+  <button class="mobile-menu-item" data-modal="batch"><svg><use href="#i-batch"/></svg><span data-i18n="nav.batch">Batch</span></button>
+  <button class="mobile-menu-item" data-modal="saved"><svg><use href="#i-save"/></svg><span data-i18n="nav.saved">Saved</span></button>
+  <button class="mobile-menu-item" id="mobileLangToggle"><svg><use href="#i-globe"/></svg><span data-i18n="nav.language">Language</span></button>
+</div>
+
+<main class="shell">
+  <section class="hero" id="hero">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <div class="eyebrow"><span class="pulse"></span><span data-i18n="hero.eyebrow">Free pre-screen · Australia-wide · No sign-up</span></div>
+        <h1><span data-i18n="hero.title1">Can a container truck</span><br><span class="accent" data-i18n="hero.title2">reach this address?</span></h1>
+        <p class="hero-sub" data-i18n="hero.sub">Check street access, overhead clearances, powerlines, slope, driveway and drop-zone space before you book the truck — then generate a site-verification report.</p>
+        <div class="search-wrap" id="searchWrap">
+          <div class="search-box">
+            <svg class="search-ico"><use href="#i-search"/></svg>
+            <input id="addressInput" type="text" autocomplete="off" spellcheck="false" placeholder="Search an Australian address — e.g. 12 Smith St Parramatta NSW" aria-label="Australian address">
+            <button class="search-clear" id="searchClear" aria-label="Clear"><svg><use href="#i-close"/></svg></button>
+            <button class="search-btn" id="searchBtn" data-i18n="search.button">Check address</button>
+          </div>
+          <div class="search-drop" id="searchDrop" hidden></div>
+          <div class="search-hint">
+            <span data-i18n="search.hint">Geocoded with OpenStreetMap Nominatim (free API). Type at least 4 characters.</span>
+            <button class="link-btn" id="manualCoordsBtn" data-i18n="search.manual">Enter coordinates manually</button>
+          </div>
+          <div class="manual-coords" id="manualCoords" hidden>
+            <input id="latInput" type="number" step="any" placeholder="Latitude e.g. -33.8154" aria-label="Latitude">
+            <input id="lonInput" type="number" step="any" placeholder="Longitude e.g. 151.0059" aria-label="Longitude">
+            <button class="btn btn-primary btn-sm" id="manualGo" data-i18n="search.manualGo">Locate</button>
+            <a class="link-btn" target="_blank" rel="noopener" href="https://www.google.com/maps">Find coordinates on Google Maps ↗</a>
+          </div>
+        </div>
+        <div class="hero-stats">
+          <div><strong>11</strong><span data-i18n="hero.stat1">key checks</span></div>
+          <div><strong>6</strong><span data-i18n="hero.stat2">delivery methods</span></div>
+          <div><strong>8</strong><span data-i18n="hero.stat3">states &amp; territories</span></div>
+          <div><strong>0</strong><span data-i18n="hero.stat4">API keys needed</span></div>
+        </div>
+        <div class="hero-demo">
+          <span data-i18n="hero.tryDemo">No address handy?</span>
+          <button class="chip chip-demo" data-demo="green"><span class="dot dot-green"></span><span data-i18n="demo.green">Industrial yard — 40ft drop</span></button>
+          <button class="chip chip-demo" data-demo="amber"><span class="dot dot-amber"></span><span data-i18n="demo.amber">Tight suburban street — 20ft side loader</span></button>
+          <button class="chip chip-demo" data-demo="red"><span class="dot dot-red"></span><span data-i18n="demo.red">Narrow dead-end — not suitable</span></button>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 460 380" class="art-svg">
+          <defs>
+            <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff9a53"/><stop offset="1" stop-color="#ff6a2b"/></linearGradient>
+            <pattern id="gridp" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0v26" fill="none" stroke="#2a3a58" stroke-width="1"/></pattern>
+          </defs>
+          <rect x="20" y="30" width="420" height="320" rx="20" fill="#0d1729" stroke="#20304d"/>
+          <rect x="20" y="30" width="420" height="320" rx="20" fill="url(#gridp)" opacity=".6"/>
+          <path d="M30 300h400M30 200h400M120 40v300M300 40v300" stroke="#233654" stroke-width="1.4" stroke-dasharray="6 8"/>
+          <circle cx="300" cy="200" r="64" fill="#ff8a3d" opacity=".08"/>
+          <circle cx="300" cy="200" r="64" fill="none" stroke="#ff8a3d" stroke-dasharray="4 6" opacity=".7"/>
+          <circle cx="300" cy="200" r="6" fill="#ff8a3d"/>
+          <g transform="translate(232 208) rotate(-6)">
+            <rect x="0" y="0" width="150" height="64" rx="4" fill="#12203a" stroke="#3a5177" stroke-width="2"/>
+            <g stroke="#3a5177" opacity=".7"><path d="M10 8v48M30 8v48M50 8v48M70 8v48M90 8v48M110 8v48M130 8v48"/></g>
+            <rect x="0" y="0" width="12" height="64" fill="url(#g1)"/>
+            <rect x="138" y="0" width="12" height="64" fill="url(#g1)"/>
+          </g>
+          <g transform="translate(196 150)">
+            <rect x="0" y="22" width="64" height="22" rx="6" fill="#182a46" stroke="#3a5177" stroke-width="2"/>
+            <path d="M8 22V14h18l8 8" fill="none" stroke="#3a5177" stroke-width="2"/>
+            <circle cx="14" cy="48" r="7" fill="#0b1526" stroke="#5f7ba6" stroke-width="2"/>
+            <circle cx="48" cy="48" r="7" fill="#0b1526" stroke="#5f7ba6" stroke-width="2"/>
+          </g>
+          <g transform="translate(60 88)">
+            <rect x="0" y="0" width="120" height="74" rx="8" fill="#101d33" stroke="#2b3f61"/>
+            <circle cx="16" cy="16" r="4" fill="#22c55e"/>
+            <text x="28" y="20" fill="#c9d7ee" font-family="Segoe UI, sans-serif" font-size="11">ACCESS OK</text>
+            <text x="12" y="42" fill="#7d90b0" font-family="Segoe UI, sans-serif" font-size="9">ROAD WIDTH 7.2 m</text>
+            <text x="12" y="58" fill="#7d90b0" font-family="Segoe UI, sans-serif" font-size="9">CLEARANCE 5.1 m</text>
+          </g>
+          <g transform="translate(330 60)">
+            <rect x="0" y="0" width="96" height="52" rx="8" fill="#101d33" stroke="#2b3f61"/>
+            <circle cx="14" cy="16" r="4" fill="#f5b942"/>
+            <text x="24" y="20" fill="#c9d7ee" font-family="Segoe UI, sans-serif" font-size="10">POWER 12 m</text>
+            <text x="12" y="38" fill="#7d90b0" font-family="Segoe UI, sans-serif" font-size="9">DROP ZONE 14 x 4 m</text>
+          </g>
+        </svg>
+        <div class="art-caption">AUSTRALIA-WIDE · 20GP / 40GP / 40HC · SIDE LOADER / TILT TRAY / HIAB</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="workspace" id="workspace" hidden>
+    <div class="address-bar">
+      <div class="address-main">
+        <span class="address-pin"><svg><use href="#i-pin"/></svg></span>
+        <div class="address-text"><strong id="addrTitle">—</strong><span id="addrSub">—</span></div>
+      </div>
+      <div class="address-actions">
+        <button class="btn btn-ghost btn-sm" id="newAddressBtn" data-i18n="address.change">Change address</button>
+        <button class="btn btn-ghost btn-sm" id="refreshAutoBtn"><svg><use href="#i-refresh"/></svg><span data-i18n="auto.refresh">Refresh data</span></button>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="col-form">
+        <section class="card step-card" data-step="address">
+          <div class="step-head">
+            <span class="step-num">01</span>
+            <div><h2 data-i18n="step1.title">Location &amp; auto checks</h2><p data-i18n="step1.sub">Address, map and free-API pre-screen</p></div>
+          </div>
+          <div class="step-body step-body-address">
+            <div class="map-panel">
+              <div class="map" id="map">
+                <div class="map-tiles" id="mapTiles"></div>
+                <div class="map-marker" id="mapMarker"><span class="marker-pin"><svg><use href="#i-pin"/></svg></span><span class="marker-ring" id="markerRing"></span></div>
+                <div class="map-attribution" id="mapAttribution">© OpenStreetMap contributors</div>
+                <div class="map-controls">
+                  <button class="map-btn" id="zoomIn" aria-label="Zoom in"><svg><use href="#i-plus"/></svg></button>
+                  <button class="map-btn" id="zoomOut" aria-label="Zoom out"><span style="font-size:18px;line-height:1">−</span></button>
+                  <button class="map-btn map-btn-wide" id="mapStyleBtn" title="Toggle satellite"><svg><use href="#i-layers"/></svg><span id="mapStyleLabel">Satellite</span></button>
+                </div>
+                <div class="map-recenter" id="mapRecenter" hidden><button class="btn btn-primary btn-xs" id="recenterBtn" data-i18n="map.recenter">Re-centre on address</button></div>
+              </div>
+              <div class="map-side">
+                <div class="auto-status" id="autoStatus"><span class="spinner"></span><span data-i18n="auto.loading">Pulling road data from OpenStreetMap…</span></div>
+                <div class="auto-tiles" id="autoTiles"></div>
+                <div class="auto-warnings" id="autoWarnings"></div>
+                <div class="auto-foot"><span data-i18n="auto.foot">Source: OpenStreetMap / Overpass · Open-Meteo elevation. Coverage varies — verify on site.</span></div>
+              </div>
+            </div>
+            <details class="coord-details">
+              <summary data-i18n="address.coords">Coordinates &amp; map links</summary>
+              <div class="coord-row">
+                <code id="coordText">—</code>
+                <a id="gmapLink" target="_blank" rel="noopener">Google Maps ↗</a>
+                <a id="osmLink" target="_blank" rel="noopener">OpenStreetMap ↗</a>
+                <a id="nhvrLink" target="_blank" rel="noopener">NHVR Network Map ↗</a>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section class="card step-card" data-step="cargo">
+          <button class="step-head step-toggle" data-toggle="cargo">
+            <span class="step-num">02</span>
+            <div><h2 data-i18n="step2.title">Container &amp; delivery method</h2><p data-i18n="step2.sub">Size, mass and equipment preference</p></div>
+            <span class="step-meta" data-meta="cargo"></span>
+            <svg class="chev"><use href="#i-chevron"/></svg>
+          </button>
+          <div class="step-body" id="bodyCargo"></div>
+        </section>
+
+        <section class="card step-card open" data-step="core">
+          <button class="step-head step-toggle" data-toggle="core">
+            <span class="step-num">03</span>
+            <div><h2 data-i18n="stepCore.title">Key conditions</h2><p data-i18n="stepCore.sub">Road width, gate, drop space, clearance and ground — about 1 minute</p></div>
+            <span class="step-meta" data-meta="core"></span>
+            <svg class="chev"><use href="#i-chevron"/></svg>
+          </button>
+          <div class="step-body" id="bodyCore"></div>
+        </section>
+
+        <section class="card step-card" data-step="advanced">
+          <button class="step-head step-toggle" data-toggle="advanced">
+            <span class="step-num">04</span>
+            <div><h2 data-i18n="stepAdv.title">More site conditions (optional)</h2><p data-i18n="stepAdv.sub">Adding these improves accuracy — you can still get a verdict without them</p></div>
+            <span class="step-meta" data-meta="advanced"></span>
+            <svg class="chev"><use href="#i-chevron"/></svg>
+          </button>
+          <div class="step-body" id="bodyAdvanced"></div>
+        </section>
+
+        <section class="card notes-card">
+          <label for="notesInput" data-i18n="notes.label">Site notes (optional)</label>
+          <textarea id="notesInput" rows="3" placeholder="e.g. gate code, low branches at front, strata approval pending…" data-i18n-placeholder="notes.placeholder"></textarea>
+        </section>
+      </div>
+
+      <aside class="col-side">
+        <div class="card verdict-card" id="verdictCard">
+          <div class="verdict-head">
+            <span class="verdict-kicker" data-i18n="verdict.kicker">Pre-screen verdict</span>
+            <span class="confidence-badge" id="confidenceBadge">—</span>
+          </div>
+          <div class="gauge-wrap">
+            <svg class="gauge" viewBox="0 0 120 120" id="gaugeSvg">
+              <circle cx="60" cy="60" r="50" class="gauge-track"/>
+              <circle cx="60" cy="60" r="50" class="gauge-fill" id="gaugeFill"/>
+            </svg>
+            <div class="gauge-value"><strong id="scoreValue">—</strong><span>/100</span></div>
+          </div>
+          <div class="verdict-label" id="verdictLabel">—</div>
+          <p class="verdict-text" id="verdictText"></p>
+          <div class="verdict-meta" id="verdictMeta"></div>
+          <div class="key-checks" id="keyChecks"></div>
+          <div class="quick-advice" id="quickAdvice"></div>
+          <details class="score-details">
+            <summary data-i18n="verdict.details">Score details</summary>
+            <div class="cat-bars" id="catBars"></div>
+          </details>
+          <div class="blockers" id="blockers"></div>
+          <div class="verdict-actions">
+            <button class="btn btn-primary" id="reportBtn"><svg><use href="#i-print"/></svg><span data-i18n="verdict.report">Generate report</span></button>
+            <button class="btn btn-ghost" id="saveBtn"><svg><use href="#i-save"/></svg><span data-i18n="verdict.save">Save</span></button>
+            <button class="btn btn-ghost" id="csvBtn" title="Export this check as JSON"><svg><use href="#i-download"/></svg><span data-i18n="verdict.export">Export</span></button>
+          </div>
+          <p class="verdict-disclaimer" data-i18n="verdict.disclaimer">Pre-screen only. Final decision rests with the driver and road manager. Confirm permits and site conditions before dispatch.</p>
+        </div>
+
+        <div class="card methods-card">
+          <div class="card-title"><svg><use href="#i-truck"/></svg><h3 data-i18n="methods.title">Delivery options</h3></div>
+          <div id="methodsList" class="methods-list"></div>
+        </div>
+
+        <div class="card next-card">
+          <div class="card-title"><svg><use href="#i-shield"/></svg><h3 data-i18n="next.title">Official checks</h3></div>
+          <div class="next-links" id="nextLinks"></div>
+        </div>
+
+        <div class="card saved-mini" id="savedMini" hidden>
+          <div class="card-title"><svg><use href="#i-save"/></svg><h3 data-i18n="saved.title">Saved checks</h3></div>
+          <div id="savedMiniList"></div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="info-strip" id="infoStrip">
+    <div class="info-card">
+      <div class="info-ico"><svg><use href="#i-info"/></svg></div>
+      <h3 data-i18n="info1.title">Built for Australian conditions</h3>
+      <p data-i18n="info1.text">Thresholds combine national heavy-vehicle network rules, state road-manager maps and container transport delivery requirements (tilt tray, side loader, Hiab and semi-trailer).</p>
+    </div>
+    <div class="info-card">
+      <div class="info-ico"><svg><use href="#i-globe"/></svg></div>
+      <h3 data-i18n="info2.title">Free, open data only</h3>
+      <p data-i18n="info2.text">OpenStreetMap Nominatim geocoding, Overpass road attributes and Open-Meteo elevation. No API keys, no paid subscriptions, no lock-in.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-ico"><svg><use href="#i-shield"/></svg></div>
+      <h3 data-i18n="info3.title">Honest about limits</h3>
+      <p data-i18n="info3.text">Open data cannot see your gate, driveway camber or powerline sag. The tool tells you what to verify, gives you a printable site checklist and links to the official road maps.</p>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand"><svg><use href="#i-container"/></svg><span>CONTAINER ACCESS AU</span></div>
+    <p data-i18n="footer.text">Free pre-screening tool for Australian container deliveries. Not a substitute for a site inspection, road-manager permit or professional advice.</p>
+    <div class="footer-links">
+      <button class="link-btn" data-modal="guide" data-i18n="nav.guide">Guide</button>
+      <button class="link-btn" data-modal="sources" data-i18n="nav.sources">Standards</button>
+      <button class="link-btn" data-modal="disclaimer" data-i18n="nav.disclaimer">Disclaimer</button>
+      <button class="link-btn" data-modal="github" data-i18n="nav.github">GitHub Pages</button>
+      <a href="https://www.nhvr.gov.au/road-access/route-planner" target="_blank" rel="noopener">NHVR Route Planner ↗</a>
+    </div>
+  </div>
+</footer>
+
+<div class="toast-wrap" id="toastWrap" aria-live="polite"></div>
+
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 id="modalTitle">—</h2>
+      <button class="icon-btn" id="modalClose" aria-label="Close"><svg><use href="#i-close"/></svg></button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<template id="tpl-question">
+  <div class="question">
+    <div class="q-head">
+      <label class="q-label"></label>
+      <span class="q-weight"></span>
+    </div>
+    <div class="q-options" role="radiogroup"></div>
+    <div class="q-help"></div>
+    <div class="q-extra"></div>
+  </div>
+</template>
+
+<template id="tpl-section-intro">
+  <div class="section-intro"><p></p></div>
+</template>
+
+<script src="assets/js/i18n.js?v=22"></script>
+<script src="assets/js/rules.js?v=22"></script>
+<script src="assets/js/api.js?v=22"></script>
+<script src="assets/js/map.js?v=22"></script>
+<script src="assets/js/report.js?v=22"></script>
+<script src="assets/js/modals.js?v=22"></script>
+<script src="assets/js/app.js?v=22"></script>
+<!-- ===== AU-FCL CRM 集成启动器：仅新增，不修改原应用逻辑 ===== -->
+<script>
+(function(){
+  function fire(el,type){ try{ el.dispatchEvent(new Event(type,{bubbles:true})); }catch(e){} }
+  function setAddress(a){
+    var inp=document.getElementById('addressInput');
+    if(!inp) return false;
+    inp.value=a; fire(inp,'input'); fire(inp,'change');
+    return true;
+  }
+  function doSearch(delay){
+    setTimeout(function(){ var b=document.getElementById('searchBtn'); if(b) b.click(); }, delay||900);
+  }
+  function boot(){
+    var q={};
+    try{ (location.search||'').replace(/^\?/,'').split('&').forEach(function(kv){ if(!kv)return; var p=kv.split('='); q[decodeURIComponent(p[0])]=decodeURIComponent((p[1]||'').replace(/\+/g,' ')); }); }catch(e){}
+    var addr=q.address||q.addr||'';
+    if(addr && setAddress(addr)) doSearch(q.auto==='0'?0:1200);
+    window.addEventListener('message',function(e){
+      var d=e.data; if(!d||d.ch!=='aufcl-crm') return;
+      if(d.type==='searchAddress'&&d.payload&&d.payload.address){
+        if(setAddress(d.payload.address)) doSearch(300);
+      }
+    });
+    try{ parent.postMessage({ch:'aufcl-module',type:'ready',payload:{module:'container-access'}},'*'); }catch(e){}
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot); else boot();
+})();
+</script>
+<!-- ===== AU-FCL CRM 增强层：坐标锁谷歌街景 + 顶部自动结论 + 隐藏 11 项问答（纯新增，不改原逻辑） ===== -->
+<style>
+  #verdictCard{display:none!important}
+  section[data-step="core"], section[data-step="advanced"], #bodyCore, #bodyAdvanced{display:none!important}   /* 03/04 问答隐藏，改自动判定 */
+  #gvTop{margin:0 0 16px;background:linear-gradient(160deg,#0f1a2e,#12203a);border:1px solid #22304d;border-radius:16px;overflow:hidden}
+  #gvTop .top{display:flex;gap:16px;flex-wrap:wrap;padding:16px 18px}
+  #gvTop .badge{font-size:20px;font-weight:800;padding:10px 18px;border-radius:12px;white-space:nowrap}
+  #gvTop .why{flex:1;min-width:260px;color:#c9d6ea;font-size:13px;line-height:1.8}
+  #gvTop .why b{color:#fff}
+  #gvTop .why ul{margin:6px 0 0 18px;padding:0}
+  #gvTop .why li{margin:2px 0}
+  #gvTop .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:0 18px 14px}
+  #gvTop .cell{background:#0b1424;border:1px solid #1c2740;border-radius:9px;padding:8px 10px}
+  #gvTop .cell i{display:block;font-style:normal;color:#7d8ca6;font-size:11px;margin-bottom:3px}
+  #gvTop .cell b{color:#e8eef7;font-size:14px}
+  #gvTop .sv{border-top:1px solid #1c2740;padding:12px 18px 16px}
+  #gvTop .sv iframe{width:100%;height:330px;border:0;border-radius:12px;display:block;background:#000}
+  #gvTop .sv .h{color:#7d8ca6;font-size:11.5px;margin-top:8px;line-height:1.6}
+</style>
+<script>
+(function(){
+  var TRUCK = { '20GP': {L:9.6,W:2.5,H:4.05,need:5.0}, '40GP': {L:16.5,W:2.5,H:4.2,need:5.5}, '40HC': {L:16.5,W:2.5,H:4.45,need:5.5} };
+  var ctn = '40GP';
+  function txt(el){ return el ? String(el.textContent||'').replace(/\s+/g,' ').trim() : ''; }
+  function num(t){ var m=String(t).match(/([0-9]+(?:\.[0-9]+)?)/); return m?parseFloat(m[1]):null; }
+  var AU = { latMin: -44, latMax: -9, lonMin: 112, lonMax: 154 };
+  function inAU(lat, lon){ return lat >= AU.latMin && lat <= AU.latMax && lon >= AU.lonMin && lon <= AU.lonMax; }
+  function coords(){
+    var t = txt(document.getElementById('coordText'));
+    var m = t.match(/(-?\d{1,3}\.\d{3,})\s*,\s*(-?\d{1,3}\.\d{3,})/);
+    return m ? { lat: m[1], lon: m[2] } : null;
+  }
+  /* 按「标签行 → 下一行值」解析数据卡（适配原版 tile 结构） */
+  function parseTiles(){
+    var out = {};
+    var box = document.getElementById('autoTiles');
+    if(!box) return out;
+    var lines = String(box.innerText || '').split(/\n+/).map(function(x){ return x.trim(); }).filter(Boolean);
+    var LABELS = ['道路','路宽','车道','路面','街道坡度','电线','道路限制','死胡同','净空','限高','限重'];
+    for(var i=0;i<lines.length;i++){
+      var k = null;
+      for(var j=0;j<LABELS.length;j++){ if(lines[i].indexOf(LABELS[j])===0){ k=LABELS[j]; break; } }
+      if(!k || out[k]) continue;
+      var v = lines[i].slice(k.length).replace(/^[（(][^）)]*[）)]/,'').trim();
+      if(!v){ v = lines[i+1] || ''; }
+      out[k] = String(v).replace(/\s*估算\s*$/,'').trim();
+    }
+    return out;
+  }
+  function judge(){
+    var tiles = parseTiles(); var T = TRUCK[ctn] || TRUCK['40GP'];
+    var w = num(tiles['路宽'] || '');
+    var slope = num(tiles['街道坡度'] || '');
+    var power = /存在|有(?!限)/.test(tiles['电线'] || '') ? '有' : (/未发现|无/.test(tiles['电线'] || '') ? '无' : '未知');
+    var dead = /是/.test(tiles['死胡同'] || '') ? '是' : (/否/.test(tiles['死胡同'] || '') ? '否' : '未知');
+    var surf = (tiles['路面'] || '').toLowerCase();
+    var bad = [], warn = [], ok = [];
+    if(w!=null){
+      if(w < T.W + 0.5) bad.push('路宽约 '+w.toFixed(1)+'m，小于柜车宽 '+T.W+'m + 安全余量');
+      else if(w < T.need) warn.push('路宽约 '+w.toFixed(1)+'m，低于 '+ctn+' 建议最小 '+T.need+'m，需慢行会车或临时占道');
+      else ok.push('路宽约 '+w.toFixed(1)+'m，满足 '+ctn+' 柜车（宽 '+T.W+'m）通行余量');
+    } else warn.push('该路段无实测路宽数据，需现场量测（柜车宽 '+T.W+'m + 余量）');
+    if(power==='有') warn.push('附近存在电线杆/架空线：需确认净空 ≥ '+(T.H+0.4).toFixed(1)+'m（柜车高 '+T.H+'m）');
+    if(dead==='是') warn.push('死胡同：'+ctn+' 长约 '+T.L+'m 需倒车/掉头空间，落柜前需确认');
+    if(slope!=null && slope>=8) warn.push('街道坡度 '+slope+'%，重载上下坡与刹车风险');
+    if(/unpaved|gravel|dirt|earth|ground/.test(surf)) warn.push('路面未硬化（'+surf+'），需核实承载与雨天风险');
+    /* 柜内货重上限（原版 SIZES）+ 公路限重提示 */
+    var CAP = { '20GP': 28.2, '40GP': 27.0, '40HC': 29.3 };
+    var cap = CAP[ctn] + ' t';
+    /* 半挂 Trailer（车+柜约 16.5m） */
+    var trailer = w != null ? (w >= T.need ? '✅ 可进（慢行）' : (w >= T.W + 0.8 ? '⚠️ 勉强，需占道' : '⛔ 不可')) : '需实测';
+    /* 侧面叉装 Sideloader：车侧需约 3m 作业空间 */
+    var needSide = T.W + 4.0;
+    var sideloader = w != null ? (w >= needSide ? '✅ 可作业' : (w >= needSide - 1 ? '⚠️ 偏窄，需封路' : '⛔ 空间不足')) : '需实测';
+    if(w != null && w < needSide) warn.push('Sideloader 侧向作业需约 ' + needSide.toFixed(1) + 'm 净宽，当前约 ' + w.toFixed(1) + 'm');
+    if(dead === '是') trailer = trailer.replace('✅', '⚠️');
+    /* 澳洲本土派送车队匹配（按路宽与净空逐项判定） */
+    var fleet = [];
+    var canSemi = w != null && w >= T.need;
+    var canSide = w != null && w >= (T.W + 4.0);
+    var canRigid = w != null && w >= 3.2;
+    if (canSemi) fleet.push('✅ 40\' 半挂 Trailer（标准集装箱拖车）');
+    else fleet.push('⛔ 40\' 半挂 Trailer（路宽不足 ' + T.need + 'm）');
+    if (canSide) fleet.push('✅ Sideloader 侧装车（需 ' + (T.W + 4).toFixed(1) + 'm 净宽）');
+    else fleet.push('⛔ Sideloader 侧装车（需 ' + (T.W + 4).toFixed(1) + 'm 净宽，当前 ' + (w != null ? w.toFixed(1) : '未知') + 'm）');
+    if (canRigid) fleet.push('✅ 刚性卡车 Rigid body（20GP 短柜/拆柜配送）');
+    else fleet.push('⛔ 刚性卡车（3.2m 以下无法通行）');
+    fleet.push(power === '有' ? '⚠️ 吊装 Crane truck（需确认架空线净空 ≥' + (T.H + 0.4).toFixed(1) + 'm）' : '✅ 吊装 Crane truck（无架空线记录，仍需现场确认）');
+    /* 推荐派送方式：必须与结论一致，绝不出现"不可"却仍推 40GP */
+    var recommend;
+    if (canSemi) recommend = ctn + ' + 40\' 半挂 Trailer（标准派送）';
+    else if (canSide) recommend = 'Sideloader 侧装（无需倒车/占道）';
+    else if (canRigid) recommend = '改 20GP 短柜 + 刚性卡车，或小车驳运（shuttle）到门口';
+    else recommend = '不建议整柜直达：需小车驳运/吊装驳运，或改小柜型并现场实测';
+    if (dead === '是' && canSemi) recommend = ctn + ' + 半挂 Trailer（死胡同，需倒车引导）';
+    var verdict = bad.length ? 'no' : (warn.length ? 'conditional' : (w != null ? 'yes' : 'conditional'));
+    return { verdict: verdict, tips: warn, greens: ok, reds: bad, tiles: tiles, truck: T, w: w, cap: cap, trailer: trailer, sideloader: sideloader, fleet: fleet, recommend: recommend, canSemi: canSemi, canSide: canSide, canRigid: canRigid };
+  }
+  var lastKey = '';
+  function render(){
+    var c = coords();
+    var title = txt(document.getElementById('addrTitle'));
+    var sub = txt(document.getElementById('addrSub'));
+    var status = txt(document.getElementById('autoStatus'));
+    if(!c || !title) return;
+    var key = c.lat + ',' + c.lon + title + status;
+    if(key === lastKey) return;
+    lastKey = key;
+    var j = judge();
+    var V = j.reds.length ? 'no' : (j.tips.length ? 'conditional' : (j.w != null ? 'yes' : 'conditional'));
+    var map = {
+      yes: ['✅ 可以直接进柜', '#4ade80', 'rgba(74,222,128,.12)', '数据看该地址通行条件满足 '+ctn+' 柜车要求。'],
+      conditional: ['⚠️ 有条件能进柜', '#fbbf24', 'rgba(251,191,36,.12)', '存在限制项，需要现场配合（占道/慢行/引导）后再落柜。'],
+      no: ['⛔ 不建议直接进柜', '#f87171', 'rgba(248,113,113,.12)', '关键尺寸不足，需换小柜型/申请路权/改用小车驳运。']
+    }[V];
+    var host = document.getElementById('workspace');
+    if(!host) return;
+    var old = document.getElementById('gvTop'); if(old) old.remove();
+    var box = document.createElement('div');
+    box.id = 'gvTop';
+    var tips = j.reds.concat(j.tips).slice(0,5);
+    box.innerHTML =
+      '<div class="top">' +
+        '<div class="badge" style="background:'+map[2]+';color:'+map[1]+';border:1px solid '+map[1]+'">'+map[0]+'</div>' +
+        '<div class="why"><b>'+ (title||'') + (sub?(' · '+sub):'') +'</b><br>'+ map[3] +
+          (tips.length ? ('<ul>'+tips.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>') : '<ul><li>未发现明显障碍项。</li></ul>') +
+          '<div style="color:#7d8ca6;font-size:11.5px;margin-top:6px">柜车判据：'+ctn+' 柜宽 '+j.truck.W+'m / 柜车总高 '+j.truck.H+'m / 车+柜总长 '+j.truck.L+'m（含牵引车）。结论由 OSM 路网数据自动推算，落柜前请以现场实测与司机判断为准。</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="grid">' +
+        [['道路', j.tiles['道路']||'-'],['路宽', j.w!=null?(j.w.toFixed(1)+' m'):'未标注'],['车道', j.tiles['车道']||'-'],['路面', j.tiles['路面']||'-'],['坡度', j.tiles['街道坡度']||'-'],['电线', j.tiles['电线']||'-'],['道路限制', j.tiles['道路限制']||'-'],['死胡同', j.tiles['死胡同']||'-']]
+          .map(function(p){ return '<div class="cell"><i>'+p[0]+'</i><b>'+String(p[1]).slice(0,28)+'</b></div>'; }).join('') +
+      '</div>' +
+      '<div class="grid" style="border-top:1px solid #1c2740;padding-top:12px">' +
+        [['柜内货重上限', j.cap], ['公路限重 GML/CML', '42.5t / 45.5t'], ['半挂 Trailer', j.trailer], ['侧面叉装 Sideloader', j.sideloader]]
+          .map(function(p){ return '<div class="cell"><i>'+p[0]+'</i><b style="font-size:12.5px;line-height:1.5">'+p[1]+'</b></div>'; }).join('') +
+      '</div>' +
+      '<div style="padding:0 18px 14px">' +
+        '<div style="background:#0b1424;border:1px solid #23406b;border-radius:10px;padding:10px 12px;margin-bottom:10px">' +
+          '<div style="color:#7d8ca6;font-size:11px;margin-bottom:4px">推荐派送方式（与本结论一致）</div>' +
+          '<div style="color:#ffd28a;font-size:14px;font-weight:700;line-height:1.5">' + j.recommend + '</div>' +
+        '</div>' +
+        '<div style="color:#7d8ca6;font-size:11px;margin-bottom:4px">澳洲本土车队匹配</div>' +
+        '<div style="color:#c9d6ea;font-size:12.5px;line-height:1.9">' + j.fleet.map(function(x){ return x; }).join('<br>') + '</div>' +
+      '</div>' +
+      '<div style="padding:0 18px 14px;color:#7d8ca6;font-size:11.5px;line-height:1.7">' +
+        '官方核查：<a target="_blank" href="https://www.nhvr.gov.au/">NHVR 全国路网地图</a> · ' +
+        '<a target="_blank" href="https://www.cityservices.act.gov.au/">州/领地道路管理方</a> · ' +
+        '<a target="_blank" href="https://www.google.com/search?q=Australia+council+works+permit">所在 Council 许可</a> · ' +
+        '超重/超尺寸车辆上路需 NHVR 或州级许可，落柜前请核实。' +
+      '</div>' +
+      '<div class="sv"><div style="color:#c9d6ea;font-size:13px;font-weight:700;margin-bottom:8px">🛰 谷歌卫星图（已锁定该地址 · 仅澳洲范围内）</div>' +
+        '<iframe id="gvFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=' + c.lat + ',' + c.lon + '&t=k&z=19&region=AU&ll=' + c.lat + ',' + c.lon + '&output=embed"></iframe>' +
+        '<div style="color:#c9d6ea;font-size:13px;font-weight:700;margin:12px 0 8px">📷 谷歌街景实况</div>' +
+        '<iframe id="gvPano" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=' + c.lat + ',' + c.lon + '&layer=c&cbll=' + c.lat + ',' + c.lon + '&cbp=11,0,0,0,0&output=embed"></iframe>' +
+        '<div class="h">若街景空白说明该点无谷歌街景覆盖，请用 <a target="_blank" href="https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=' + c.lat + ',' + c.lon + '" style="color:#ff9d4d">谷歌街景新窗口</a> 或 <a target="_blank" href="https://www.google.com/maps/search/?api=1&query=' + c.lat + ',' + c.lon + '" style="color:#ff9d4d">谷歌地图</a> 查看 · 经纬度 ' + c.lat + ', ' + c.lon + '</div></div>';
+    host.insertBefore(box, host.firstChild);
+  }
+  /* 同步原版 02 区块的派送方式标签，避免"判定不可却仍推 40GP" */
+  function syncMethod(){
+    try{
+      var j = judge();
+      var wants = j.canSemi ? 'half' : (j.canSide ? 'side' : (j.canRigid ? 'rigid' : 'shuttle'));
+      var sel = document.querySelector('[data-method], #methodSelect, select[name=method]');
+      if (sel && sel.tagName === 'SELECT') {
+        var opt = [].slice.call(sel.options).filter(function(o){ return (o.value||'').toLowerCase().indexOf(wants) >= 0 || (o.text||'').toLowerCase().indexOf(wants) >= 0; })[0];
+        if (opt) sel.value = opt.value;
+      }
+    }catch(e){}
+  }
+  function loop(){ render(); syncMethod(); setTimeout(loop, 1200); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', loop); else loop();
+})();
+</script>
+</body>
+</html>

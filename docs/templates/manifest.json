@@ -1,0 +1,32 @@
+[
+  {
+    "f": "GlobalVertical-Booking.xls",
+    "t": "订舱单 Booking Form",
+    "tag": "Excel",
+    "d": "船公司订舱：发货人/收货人/柜型/品名/重量/船期，填好回传即可订舱。"
+  },
+  {
+    "f": "VGM-Template.xls",
+    "t": "VGM 重量申报模板",
+    "tag": "Excel",
+    "d": "船代 VGM 申报：柜号/铅封/货物净重 + 柜重 = 总重，截关前提交。"
+  },
+  {
+    "f": "Customs-Declaration-Template.xlsx",
+    "t": "报关资料 & 出口正报模板",
+    "tag": "Excel",
+    "d": "出口报关全套：发票 / 装箱单 / 报关要素，含正报格式。"
+  },
+  {
+    "f": "FCL-Packing-Declaration.docx",
+    "t": "FCL 装箱声明 Packing Declaration",
+    "tag": "Word",
+    "d": "澳洲进口用：声明无违禁品 / 无土壤 / 木质包装已处理，随提单与清关文件提交。"
+  },
+  {
+    "f": "Wooden-Storage-Declaration.docx",
+    "t": "木质包装声明 Wooden Packing Declaration",
+    "tag": "Word",
+    "d": "含木托 / 木箱货物用：声明已熏蒸或热处理（ISPM 15 标准）。"
+  }
+]
