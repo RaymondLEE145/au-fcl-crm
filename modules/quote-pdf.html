@@ -1,0 +1,180 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Quote — 3 Templates</title>
+<style>
+@page{size:A4;margin:0}
+html,body{margin:0;padding:0;background:#e9eef5;font-family:"Microsoft YaHei","PingFang SC",system-ui,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.bar{position:fixed;left:0;top:0;right:0;height:52px;background:#0b2545;color:#fff;display:flex;align-items:center;gap:10px;padding:0 16px;z-index:50;font-size:13px}
+.bar b{font-size:15px}.bar .sp{flex:1}
+.bar button{border:0;border-radius:9px;padding:8px 14px;font-size:13px;cursor:pointer;background:#1e3a63;color:#dce9ff}
+.bar button.on{background:#ffd28a;color:#0b2545;font-weight:800}
+.bar .p{background:#1b7f4b;color:#fff;font-weight:700}
+.wrap{padding:70px 10px 20px}
+.page{width:210mm;height:297mm;margin:0 auto 14px;background:#fff;position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 6px 24px rgba(16,32,56,.18)}
+/* ============ 通用满版结构：页眉渐变贴边 / 主体 / 填充带 / 页脚贴底 ============ */
+.head{flex:0 0 30mm;padding:7mm 10mm;display:flex;align-items:center;justify-content:space-between;color:#fff}
+.head .brand{font-size:6.2mm;font-weight:800;letter-spacing:.6px;line-height:1.1}
+.head .sub{font-size:2.9mm;opacity:.9;margin-top:1.6mm;letter-spacing:.4px}
+.head .meta{text-align:right;font-size:2.9mm;line-height:1.75;opacity:.95}
+.head .tag{display:inline-block;margin-top:2mm;border:0.35mm solid rgba(255,255,255,.6);border-radius:1.4mm;padding:1mm 3mm;font-size:2.7mm}
+.body{flex:1 1 auto;min-height:0;padding:7mm 10mm 0}
+.fill{flex:0 1 auto;min-height:14mm}
+.foot{flex:0 0 15mm;display:flex;align-items:center;justify-content:space-between;padding:0 10mm;font-size:2.7mm;color:#fff}
+h2.sec{font-size:3.4mm;margin:0 0 2.4mm;letter-spacing:.5px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{padding:2.1mm 2.4mm;font-size:2.9mm;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+th{font-weight:700}
+td.r,th.r{text-align:right}
+.kv{display:flex;gap:4mm;font-size:2.9mm;line-height:1.8}
+.kv .k{flex:0 0 30mm;opacity:.72}
+.kv .v{flex:1;font-weight:600}
+.tot{display:flex;justify-content:space-between;align-items:baseline;padding:3mm 3.4mm;margin-top:3mm;border-radius:2mm}
+.tot .l{font-size:3.6mm;font-weight:700;letter-spacing:.5px}
+.tot .n{font-size:7.4mm;font-weight:800;letter-spacing:-.3px}
+.note{font-size:2.6mm;line-height:1.85;margin-top:3mm}
+.sig{display:flex;justify-content:space-between;gap:8mm;margin-top:7mm}
+.sig div{flex:1;border-top:0.3mm solid #b9c6d8;padding-top:2mm;font-size:2.7mm}
+/* ============ 模板 A：明亮海军蓝 + 金 ============ */
+.t1 .head{background:linear-gradient(105deg,#0b2545,#14375f 60%,#2f5c93)}
+.t1 .foot{background:#0b2545}
+.t1 h2.sec{color:#0b2545}
+.t1 th{background:#eef3fa;color:#14375f;border-bottom:0.5mm solid #0b2545}
+.t1 td{border-bottom:0.25mm solid #dfe7f2}
+.t1 .tot{background:#0b2545;color:#fff}
+.t1 .tot .n{color:#ffd28a}
+.t1 .accent{color:#2f5c93}
+.t1 .fill{background:repeating-linear-gradient(180deg,#f6f9fd 0,#f6f9fd 4mm,#eaf0f8 4mm,#eaf0f8 4.4mm);border-top:0.3mm solid #dfe7f2}
+/* ============ 模板 B：清新青绿 + 白（明亮） ============ */
+.t2 .head{background:linear-gradient(105deg,#0f766e,#0d9488 55%,#2dd4bf)}
+.t2 .foot{background:#0f766e}
+.t2 h2.sec{color:#0f766e}
+.t2 th{background:#e8f7f5;color:#0b4f4a;border-bottom:0.5mm solid #0f766e}
+.t2 td{border-bottom:0.25mm solid #d6ebe8}
+.t2 .tot{background:#0f766e;color:#fff}
+.t2 .tot .n{color:#eafff9}
+.t2 .accent{color:#0d9488}
+.t2 .fill{background:repeating-linear-gradient(180deg,#f4fbfa 0,#f4fbfa 4mm,#e3f4f1 4mm,#e3f4f1 4.4mm);border-top:0.3mm solid #d6ebe8}
+/* ============ 模板 C：暖阳橙 + 石墨（明亮商务） ============ */
+.t3 .head{background:linear-gradient(105deg,#7c2d12,#c2410c 55%,#f59e0b)}
+.t3 .foot{background:#7c2d12}
+.t3 h2.sec{color:#7c2d12}
+.t3 th{background:#fdf2e6;color:#7c2d12;border-bottom:0.5mm solid #c2410c}
+.t3 td{border-bottom:0.25mm solid #f2e2cf}
+.t3 .tot{background:#7c2d12;color:#fff}
+.t3 .tot .n{color:#ffd8a8}
+.t3 .accent{color:#c2410c}
+.t3 .fill{background:repeating-linear-gradient(180deg,#fffaf3 0,#fffaf3 4mm,#fbefdd 4mm,#fbefdd 4.4mm);border-top:0.3mm solid #f2e2cf}
+@media print{.bar{display:none}.wrap{padding:0}.page{margin:0;box-shadow:none}body{background:#fff}}
+
+/* ============ 模板 D：黑金奢华 ============ */
+.t4 .head{background:linear-gradient(105deg,#0a0a0a,#1c1c1c 55%,#3d3526)}
+.t4 .foot{background:#0a0a0a}
+.t4 h2.sec{color:#0a0a0a;border-bottom:0.4mm solid #c8a24a;padding-bottom:1.4mm}
+.t4 th{background:#f6f1e4;color:#0a0a0a;border-bottom:0.5mm solid #c8a24a}
+.t4 td{border-bottom:0.25mm solid #e8dfc8}
+.t4 .tot{background:#0a0a0a;color:#c8a24a;border:0.4mm solid #c8a24a}
+.t4 .tot .n{color:#ffd97a}
+.t4 .accent{color:#a8862a}
+.t4 .fill{background:repeating-linear-gradient(180deg,#fdfaf2 0,#fdfaf2 4mm,#f5eeda 4mm,#f5eeda 4.4mm);border-top:0.3mm solid #e8dfc8}
+/* ============ 模板 E：香槟玫瑰（明亮柔和） ============ */
+.t5 .head{background:linear-gradient(105deg,#7a3b46,#a8555f 55%,#e8a0a8)}
+.t5 .foot{background:#7a3b46}
+.t5 h2.sec{color:#7a3b46}
+.t5 th{background:#fdf1f2;color:#7a3b46;border-bottom:0.5mm solid #a8555f}
+.t5 td{border-bottom:0.25mm solid #f2dcdf}
+.t5 .tot{background:#7a3b46;color:#fff}
+.t5 .tot .n{color:#ffd9dd}
+.t5 .accent{color:#a8555f}
+.t5 .fill{background:repeating-linear-gradient(180deg,#fffafb 0,#fffafb 4mm,#fdeef0 4mm,#fdeef0 4.4mm);border-top:0.3mm solid #f2dcdf}
+.logoimg{height:13mm;max-width:52mm;object-fit:contain;display:block;background:rgba(255,255,255,.12);border-radius:2mm;padding:1mm}
+</style></head><body>
+<div class="bar">
+  <b>报价模板</b>
+  <button data-t="1" class="on">A · 海军蓝金</button>
+  <button data-t="2">B · 清新青绿</button>
+  <button data-t="3">C · 暖阳橙</button>
+  <button data-t="4">D · 黑金奢华</button>
+  <button data-t="5">E · 香槟玫瑰</button>
+  <span class="sp"></span>
+  <label class="p" style="cursor:pointer;background:#1e3a63">🖼 上传 LOGO<input class="logoinput" type="file" accept="image/*" style="display:none"></label>
+  <button data-logo="clear" style="background:#7a2b2b">清除 LOGO</button>
+  <span id="src" style="opacity:.75;font-size:12px"></span>
+  <button class="p" onclick="window.print()">🖨 打印 / 存 PDF</button>
+</div>
+<div class="wrap"><div id="pages"></div></div>
+<script>
+(function(){
+  "use strict";
+  var T=1;
+  function money(n,c){ try{ return (c||'AUD')+' '+Number(n||0).toLocaleString('en-AU',{minimumFractionDigits:2,maximumFractionDigits:2}); }catch(e){ return (c||'AUD')+' '+(n||0); } }
+  function getLogo(){ try{ return localStorage.getItem('aufcl_logo')||''; }catch(e){ return ''; } }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+  function load(){
+    var raw = '';
+    try{ var q = location.search.replace(/^\?/,'').split('&'); for(var i=0;i<q.length;i++){ var kv=q[i].split('='); if(kv[0]==='theme') T=Number(kv[1])||1; if(kv[0]==='d') raw=decodeURIComponent(kv[1]||''); } }catch(e){}
+    var d = null;
+    try{ d = JSON.parse(localStorage.getItem('aufcl_quote_pdf')||'null'); }catch(e){}
+    if(raw){ try{ d = JSON.parse(decodeURIComponent(escape(atob(raw)))); }catch(e){} }
+    if(!d) d = demo();
+    window.__Q = d;
+    return d;
+  }
+  function demo(){
+    return { quoteNo:'GV-AU-2026-001', date:new Date().toISOString().slice(0,10), valid:'14 days',
+      customer:{ company:'SAMPLE CLIENT PTY LTD', attn:'Client Contact', email:'accounts@client.com.au', phone:'+61 2 9000 0000', address:'Level 5, 100 George Street, Sydney NSW 2000' },
+      ship:{ pol:'Shenzhen / Guangzhou, CN', pod:'Melbourne, AU', ctn:'40HQ', term:'CIF', transit:'18 days', vessel:'TBN' },
+      items:[ {name:'Ocean freight (40HQ, CN → Melbourne)', qty:1, unit:'container', price:2400},
+              {name:'Destination terminal & port charges', qty:1, unit:'container', price:1180},
+              {name:'Customs clearance & documentation', qty:1, unit:'set', price:320},
+              {name:'Delivery to consignee (postcode 3175)', qty:1, unit:'container', price:480} ],
+      currency:'AUD', taxRate:0, notes:['Rates valid for 14 days from the date above.','All charges exclude GST unless stated.','Container detention/demurrage at cost if incurred.']
+    };
+  }
+  function render(){
+    var d = window.__Q, cur = d.currency||'AUD';
+    var sub = 0; (d.items||[]).forEach(function(x){ sub += Number(x.qty||1)*Number(x.price||0); });
+    var tax = sub*Number(d.taxRate||0); var total = sub+tax;
+    var rows = (d.items||[]).map(function(x,i){
+      return '<tr><td>'+(i+1)+'</td><td>'+esc(x.name)+'</td><td>'+esc(x.unit||'')+'</td><td class="r">'+esc(x.qty||1)+'</td><td class="r">'+money(x.price,cur)+'</td><td class="r">'+money(Number(x.qty||1)*Number(x.price||0),cur)+'</td></tr>';
+    }).join('');
+    var c = d.customer||{}, sh = d.ship||{};
+    document.getElementById('src').textContent = d.quoteNo ? ('No. '+d.quoteNo) : '';
+    document.getElementById('pages').innerHTML =
+    '<div class="page t'+T+'">'+
+      '<div class="head"><div>' + (getLogo() ? '<img class="logoimg" src="'+getLogo()+'" alt="logo">' : '<div class="brand">GlobalVertical Logistics</div>') + '<div class="sub">Australia FCL · Import & Delivery Solution</div></div>'+
+        '<div class="meta">QUOTATION<br><b style="font-size:4.4mm">'+esc(d.quoteNo||'')+'</b><br>'+esc(d.date||'')+(d.valid?('<span class="tag">Valid '+esc(d.valid)+'</span>'):'')+'</div></div>'+
+      '<div class="body">'+
+        '<h2 class="sec">Bill To</h2>'+
+        '<div class="kv"><div class="k">Company</div><div class="v">'+esc(c.company||'')+'</div></div>'+
+        '<div class="kv"><div class="k">Attention</div><div class="v">'+esc(c.attn||'')+'</div></div>'+
+        '<div class="kv"><div class="k">Address</div><div class="v">'+esc(c.address||'')+'</div></div>'+
+        '<div class="kv"><div class="k">Email / Phone</div><div class="v">'+esc(c.email||'')+' · '+esc(c.phone||'')+'</div></div>'+
+        '<h2 class="sec" style="margin-top:6mm">Shipment</h2>'+
+        '<div class="kv"><div class="k">POL → POD</div><div class="v">'+esc(sh.pol||'')+' → '+esc(sh.pod||'')+'</div></div>'+
+        '<div class="kv"><div class="k">Container</div><div class="v">'+esc(sh.ctn||'')+' · '+esc(sh.term||'')+' · Transit '+esc(sh.transit||'-')+'</div></div>'+
+        '<h2 class="sec" style="margin-top:6mm">Charges</h2>'+
+        '<table><colgroup><col style="width:8%"><col style="width:40%"><col style="width:12%"><col style="width:9%"><col style="width:15%"><col style="width:16%"></colgroup>'+
+        '<thead><tr><th>#</th><th>Description</th><th>Unit</th><th class="r">Qty</th><th class="r">Unit Price</th><th class="r">Amount</th></tr></thead><tbody>'+rows+'</tbody></table>'+
+        '<div class="tot"><span class="l">TOTAL'+(tax?(' (incl. tax)'):'')+'</span><span class="n">'+money(total,cur)+'</span></div>'+
+        '<div class="note">'+(d.notes||[]).map(function(n){return '· '+esc(n);}).join('<br>')+'</div>'+
+        '<div class="sig"><div>Authorised signature<br><br></div><div>Client acceptance / date<br><br></div></div>'+
+      '</div><div class="fill"></div>'+
+      '<div class="foot"><span>GlobalVertical Logistics · global-vertical.com</span><span>Page 1 / 1</span></div>'+
+    '</div>';
+  }
+  document.querySelectorAll('.bar [data-t]').forEach(function(b){
+    b.onclick=function(){ T=Number(b.getAttribute('data-t'))||1; document.querySelectorAll('.bar [data-t]').forEach(function(x){x.classList.remove('on');}); b.classList.add('on'); render(); };
+  });
+  (function bindLogo(){
+    var inp = document.querySelector('.logoinput');
+    if (inp) inp.onchange = function(){
+      var f = inp.files && inp.files[0]; if (!f) return;
+      var fr = new FileReader();
+      fr.onload = function(){ try{ localStorage.setItem('aufcl_logo', String(fr.result)); }catch(e){ alert('LOGO 太大，请用小于 200KB 的图片'); return; } render(); };
+      fr.readAsDataURL(f);
+    };
+    var clr = document.querySelector('[data-logo=clear]');
+    if (clr) clr.onclick = function(){ try{ localStorage.removeItem('aufcl_logo'); }catch(e){} render(); };
+  })();
+  load(); render();
+})();
+</script></body></html>

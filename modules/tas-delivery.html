@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>塔斯马尼亚 FCL 整柜派送计费器 | TAS FCL Delivery Calculator</title>
+<style>
+:root{
+  --navy:#0b2545;--navy2:#13315c;--blue:#1d4ed8;--accent:#ea580c;--accent2:#f97316;
+  --bg:#eef2f7;--card:#ffffff;--line:#dbe3ee;--text:#0f172a;--muted:#64748b;--soft:#f5f8fc;
+  --green:#15803d;--greenbg:#ecfdf3;--amber:#b45309;--amberbg:#fff8e6;--red:#b91c1c;--redbg:#fef2f2;
+  --shadow:0 1px 2px rgba(15,23,42,.06),0 8px 24px rgba(15,23,42,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+a{color:var(--blue)}
+.wrap{max-width:1480px;margin:0 auto;padding:0 18px 40px}
+header.top{background:linear-gradient(120deg,#081c36 0%,#0b2545 45%,#123a63 100%);color:#fff;padding:18px 0 16px;border-bottom:3px solid var(--accent)}
+.top-inner{max-width:1480px;margin:0 auto;padding:0 18px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#fbbf24);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;color:#08213d;letter-spacing:.5px;flex:0 0 auto}
+h1{font-size:21px;margin:0;font-weight:700;letter-spacing:.3px}
+.sub{color:#b8cae0;font-size:12.5px;margin-top:2px}
+.top-badges{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.badge{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#e2ecf7;border-radius:999px;padding:4px 11px;font-size:11.5px}
+.badge.acc{border-color:#fdba74;color:#fed7aa}
+nav.tabs{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:40;box-shadow:0 2px 8px rgba(15,23,42,.04)}
+.tabs-inner{max-width:1480px;margin:0 auto;padding:0 18px;display:flex;gap:4px;overflow-x:auto}
+.tab-btn{border:0;background:transparent;padding:13px 16px;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;font-family:inherit}
+.tab-btn:hover{color:var(--navy)}
+.tab-btn.active{color:var(--navy);border-bottom-color:var(--accent)}
+.tab-pane{display:none;padding-top:18px}
+.tab-pane.active{display:block}
+.layout{display:grid;grid-template-columns:430px minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:1080px){.layout{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.panel-h{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.panel-h h2{font-size:14.5px;margin:0;font-weight:700;color:var(--navy)}
+.panel-h .hint{font-size:11.5px;color:var(--muted)}
+.panel-b{padding:14px 16px}
+.field{margin-bottom:12px}
+.field label.lb{display:block;font-size:12px;font-weight:600;color:#334155;margin-bottom:5px}
+.field .tip{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.4}
+input[type=text],input[type=number],select{width:100%;padding:9px 10px;border:1px solid #cbd5e1;border-radius:9px;font-size:14px;background:#fff;font-family:inherit;color:var(--text)}
+input:focus,select:focus{outline:2px solid #bfdbfe;border-color:#60a5fa}
+input[type=text].pc{font-size:18px;font-weight:700;letter-spacing:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.types{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.types .t{border:1px solid #cbd5e1;background:#fff;border-radius:9px;padding:7px 4px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:#334155;line-height:1.25;transition:.12s}
+.types .t small{display:block;font-weight:500;font-size:10px;color:var(--muted)}
+.types .t:hover{border-color:#93c5fd}
+.types .t.sel{border-color:var(--blue);background:#eff6ff;color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+.seg{display:flex;border:1px solid #cbd5e1;border-radius:9px;overflow:hidden;flex-wrap:wrap}
+.seg button{flex:1;border:0;background:#fff;padding:8px 6px;font-size:12.5px;font-weight:600;color:#475569;cursor:pointer;font-family:inherit;white-space:nowrap}
+.seg button+button{border-left:1px solid #e2e8f0}
+.seg button.sel{background:var(--navy);color:#fff}
+.chk{display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;padding:4px 0;cursor:pointer}
+.chk input{width:16px;height:16px;accent-color:var(--blue)}
+.btn{border:0;border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+.btn-primary{background:linear-gradient(135deg,#ea580c,#f97316);color:#fff;box-shadow:0 4px 12px rgba(234,88,12,.28)}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-ghost{background:#fff;border:1px solid #cbd5e1;color:#334155}
+.btn-ghost:hover{border-color:#94a3b8;background:#f8fafc}
+.btn-sm{padding:6px 11px;font-size:12px;border-radius:8px}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap}
+.quick-pc{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.quick-pc button{border:1px dashed #cbd5e1;background:#fff;border-radius:999px;padding:4px 10px;font-size:11.5px;color:#475569;cursor:pointer;font-family:inherit}
+.quick-pc button:hover{border-color:var(--accent);color:var(--accent)}
+.suggest{position:relative}
+.suggest-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);z-index:60;max-height:240px;overflow:auto;display:none}
+.suggest-list.show{display:block}
+.suggest-list button{display:flex;width:100%;justify-content:space-between;gap:10px;border:0;background:#fff;padding:8px 12px;font-size:12.5px;cursor:pointer;font-family:inherit;text-align:left;color:#334155}
+.suggest-list button:hover{background:#f1f5f9}
+.suggest-list .pc{color:var(--muted);font-variant-numeric:tabular-nums}
+.geo-line{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 11px;font-size:12.5px;color:#334155;margin-bottom:10px;display:none}
+.geo-line.show{display:block}
+.geo-line b{color:var(--navy)}
+.km-mini{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:7px}
+.km-mini div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 7px;font-size:11px;color:var(--muted)}
+.km-mini b{display:block;color:var(--navy);font-size:12.5px}
+.res-stack{display:flex;flex-direction:column;gap:14px}
+.verdict{border-radius:14px;padding:16px 18px;display:flex;gap:14px;align-items:flex-start;border:1px solid}
+.verdict .icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex:0 0 auto}
+.verdict h3{margin:0 0 3px;font-size:17px}
+.verdict p{margin:0;font-size:12.5px;color:var(--muted)}
+.verdict.green{background:var(--greenbg);border-color:#bbf7d0}
+.verdict.green .icon{background:#dcfce7}
+.verdict.amber{background:var(--amberbg);border-color:#fde68a}
+.verdict.amber .icon{background:#fef3c7}
+.verdict.red{background:var(--redbg);border-color:#fecaca}
+.verdict.red .icon{background:#fee2e2}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:11.5px;border-radius:999px;padding:3px 9px;background:#fff;border:1px solid var(--line);color:#475569}
+.chip.warn{border-color:#fcd34d;background:#fffbeb;color:#92400e}
+.chip.bad{border-color:#fca5a5;background:#fef2f2;color:#991b1b}
+.chip.ok{border-color:#86efac;background:#f0fdf4;color:#166534}
+.routecard{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px}
+@media(max-width:760px){.routecard{grid-template-columns:1fr 1fr}}
+.routecard .rc{background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.routecard .rc .k{font-size:11px;color:var(--muted)}
+.routecard .rc .v{font-size:15px;font-weight:700;color:var(--navy);margin-top:2px}
+.routecard .rc .v small{font-size:11px;font-weight:500;color:var(--muted)}
+.total-card{background:linear-gradient(135deg,#0b2545,#123a63);color:#fff;border-radius:14px;padding:18px 20px;display:flex;gap:20px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
+.total-card .tk{font-size:12px;color:#b8cae0}
+.total-card .tv{font-size:34px;font-weight:800;letter-spacing:-.5px;line-height:1.1;color:#fff}
+.total-card .tv small{font-size:14px;font-weight:600;color:#fdba74}
+.total-card .range{font-size:12.5px;color:#cbd5e1;margin-top:3px}
+.total-card .range b{color:#fff}
+.total-card > div:last-child .tv{margin-bottom:5px}
+table.cost{width:100%;border-collapse:collapse;font-size:13px}
+table.cost th{text-align:left;font-size:11.5px;color:var(--muted);font-weight:600;border-bottom:1px solid var(--line);padding:8px 6px;text-transform:uppercase;letter-spacing:.4px}
+table.cost td{padding:8px 6px;border-bottom:1px solid #eef2f7;vertical-align:top}
+table.cost tr.grp td{background:var(--soft);font-weight:700;color:var(--navy);font-size:12.5px;border-bottom:1px solid var(--line)}
+table.cost td.amt,table.cost th.amt{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.cost td .det{font-size:11px;color:var(--muted);display:block;line-height:1.35}
+table.cost tr.sum td{font-weight:700;border-top:2px solid var(--line);background:#fafcff}
+table.cost tr.gst td{color:var(--muted)}
+table.cost tr.tot td{font-size:15px;font-weight:800;color:var(--navy);background:#f0f7ff}
+.note{font-size:12px;color:var(--muted);background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.note b{color:#334155}
+.note ul{margin:5px 0 0 18px;padding:0}
+.note li{margin:2px 0}
+.alt{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px 16px}
+.alt h4{margin:0 0 6px;font-size:14px;color:#9a3412}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 10px;font-size:12.5px}
+.kv .k{color:var(--muted)}
+.kv .v{font-weight:600;color:#334155}
+.src{font-size:12.5px;color:#334155}
+.src li{margin:4px 0}
+.mono{font-family:"Cascadia Code",Consolas,"Courier New",monospace;background:#0b2545;color:#dbeafe;border-radius:12px;padding:14px 16px;font-size:12.5px;line-height:1.7;overflow:auto;white-space:pre}
+.mono .c{color:#93c5fd}
+.mono .o{color:#fdba74}
+.pill{display:inline-block;font-size:10.5px;border-radius:999px;padding:1px 8px;vertical-align:middle}
+.pill.off{background:#dcfce7;color:#166534;border:1px solid #86efac}
+.pill.asm{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.pill.calc{background:#e0e7ff;color:#3730a3;border:1px solid #a5b4fc}
+.tbl-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;max-height:640px}
+table.pc{width:100%;border-collapse:collapse;font-size:12.7px}
+table.pc th{position:sticky;top:0;background:#f1f5f9;text-align:left;padding:9px 10px;font-size:11.5px;color:#475569;border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
+table.pc td{padding:8px 10px;border-bottom:1px solid #eef2f7;white-space:nowrap}
+table.pc td.amt,table.pc th.amt{text-align:right;font-variant-numeric:tabular-nums}
+table.pc tr:hover td{background:#f8fafc;cursor:pointer}
+.zone-pill{font-weight:700;font-size:11px;border-radius:6px;padding:2px 7px}
+.zA{background:#dcfce7;color:#166534}.zB{background:#e0f2fe;color:#075985}.zC{background:#fef9c3;color:#854d0e}.zD{background:#ffedd5;color:#9a3412}.zE{background:#fee2e2;color:#991b1b}.zI{background:#ede9fe;color:#5b21b6}
+.settings-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.set-card{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff}
+.set-card h4{margin:0 0 4px;font-size:13px;color:var(--navy)}
+.set-card .sd{font-size:11px;color:var(--muted);margin-bottom:8px}
+.set-row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:center;margin-bottom:7px}
+.set-row label{font-size:12px;color:#334155}
+.set-row input{padding:6px 8px;font-size:13px;text-align:right}
+.set-foot{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.footer{max-width:1480px;margin:26px auto 0;padding:0 18px;color:var(--muted);font-size:11.5px;line-height:1.6}
+.footer b{color:#334155}
+.disc{font-size:11px;color:#94a3b8;margin-top:10px}
+.two-col{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media(max-width:980px){.two-col{grid-template-columns:1fr}}
+h2.sec{font-size:16px;color:var(--navy);margin:22px 0 10px}
+h2.sec:first-child{margin-top:4px}
+h3.sub3{font-size:13.5px;color:#334155;margin:16px 0 8px}
+.hide{display:none!important}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #cbd5e1;border-top-color:var(--blue);border-radius:50%;animation:sp 1s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+#quote-print{display:none}
+@media print{
+  body{background:#fff}
+  header.top,nav.tabs,main,.footer{display:none!important}
+  #quote-print{display:block!important;font-size:12px;color:#000}
+  #quote-print .q-head{border-bottom:2px solid #000;padding-bottom:10px;margin-bottom:14px;display:flex;justify-content:space-between;gap:20px}
+  #quote-print h1{font-size:19px;color:#000}
+  #quote-print table{width:100%;border-collapse:collapse;font-size:11.5px}
+  #quote-print td,#quote-print th{border:1px solid #999;padding:6px 8px;text-align:left}
+  #quote-print .amt{text-align:right}
+  #quote-print .tot-row td{font-weight:700;font-size:13px}
+  #quote-print .terms{margin-top:12px;font-size:10.5px;color:#333;line-height:1.55}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="logo">TAS</div>
+    <div>
+      <h1>塔斯马尼亚 FCL 整柜派送计费器</h1>
+      <div class="sub">Tasmania FCL Container Delivery Calculator · 邮编 → 可达性判断 → 门到门费用明细</div>
+    </div>
+    <div class="top-badges">
+      <span class="badge">官方费率基准：TasPorts FY2027（2026-07-01 生效）</span>
+      <span class="badge acc">内置 120 个塔州邮编 · 4 大集装箱港</span>
+      <span class="badge">构建 2026-10-20</span>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-inner">
+    <button class="tab-btn active" data-tab="calc">① 报价计算</button>
+    <button class="tab-btn" data-tab="model">② 计费模型与公式</button>
+    <button class="tab-btn" data-tab="pc">③ 塔州邮编速查</button>
+    <button class="tab-btn" data-tab="settings">④ 费率设置（可改）</button>
+  </div>
+</nav>
+
+<main class="wrap">
+
+<!-- ======================= TAB 1 : CALC ======================= -->
+<section class="tab-pane active" id="tab-calc">
+  <div class="layout">
+    <!-- ---------- FORM ---------- -->
+    <div class="panel" id="form-panel">
+      <div class="panel-h">
+        <h2>客户与货物信息</h2>
+        <span class="hint">输入邮编即自动计算（可改参数做对比）</span>
+      </div>
+      <div class="panel-b">
+        <div class="field">
+          <label class="lb" for="f-pc">客户地址邮编 / 城镇（塔州 7xxx）</label>
+          <div class="suggest">
+            <input class="pc" type="text" id="f-pc" value="7000" maxlength="30" autocomplete="off" placeholder="如 7000 / 7250 / Hobart">
+            <div class="suggest-list" id="pc-suggest"></div>
+          </div>
+          <div class="quick-pc">
+            <button data-pc="7000">7000 Hobart</button>
+            <button data-pc="7250">7250 Launceston</button>
+            <button data-pc="7310">7310 Devonport</button>
+            <button data-pc="7320">7320 Burnie</button>
+            <button data-pc="7467">7467 Queenstown</button>
+            <button data-pc="7256">7256 King Is.</button>
+          </div>
+          <div class="tip">支持邮编或城镇名搜索；数据覆盖塔州 120 个街道邮编（含主要城镇与偏远地区）。</div>
+        </div>
+        <div class="geo-line" id="geo-line"></div>
+
+        <div class="field">
+          <label class="lb">柜型 / 尺寸</label>
+          <div class="types" id="type-list"></div>
+          <div class="tip" id="type-tip">—</div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label class="lb" for="f-gross">货物毛重（吨，含柜重）</label>
+            <input type="number" id="f-gross" value="22" min="1" max="35" step="0.5">
+          </div>
+          <div class="field">
+            <label class="lb" for="f-km">公路里程（km，可覆盖）</label>
+            <input type="number" id="f-km" value="" min="0" max="900" step="0.5" placeholder="自动">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lb">运输路径（集装箱如何进入塔州）</label>
+          <div class="seg" id="route-seg">
+            <button data-route="direct">国际直航塔州港</button>
+            <button data-route="bass">墨尔本中转 · Bass Strait</button>
+          </div>
+          <div class="tip" id="route-tip">直航：集装箱直接挂靠霍巴特 / 贝尔湾（Bell Bay）。中转：墨尔本经 Strait Link / Spirit of Tasmania 滚装至伯尼 / 德文波特。</div>
+        </div>
+
+        <div class="field">
+          <label class="lb" for="f-port">到港港口</label>
+          <select id="f-port"></select>
+          <div class="tip" id="port-tip">自动 = 选择该路径下距客户最近的港口。</div>
+        </div>
+
+        <div class="field">
+          <label class="lb">现场卸货条件</label>
+          <select id="f-unload">
+            <option value="dock">有卸货台 / 叉车，可自行卸柜</option>
+            <option value="none">无月台叉车 → 需侧卸（side loader）</option>
+            <option value="crane">需吊车 / 正面吊卸柜</option>
+            <option value="transload">半挂不能进场 → 需转运小货车</option>
+          </select>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label class="lb">半挂车能否进入场地</label>
+            <select id="f-semi">
+              <option value="yes">可以（有回车/转弯空间）</option>
+              <option value="uncertain">不确定 / 需勘察</option>
+              <option value="no">不可以（窄路/社区/地下）</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lb">场地类型</label>
+            <select id="f-site">
+              <option value="warehouse">工业仓库 / 物流园</option>
+              <option value="farm">农场 / 种植园</option>
+              <option value="residential">住宅 / 民宅地址</option>
+              <option value="construction">工地 / 临时场地</option>
+              <option value="cbd">CBD / 商业街区</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row2">
+          <div class="field">
+            <label class="lb">最后一段路况</label>
+            <select id="f-surface">
+              <option value="sealed">全程柏油路</option>
+              <option value="unsealed_short">未铺装 ≤ 3 km</option>
+              <option value="unsealed_long">未铺装 &gt; 3 km</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="lb">派送时段</label>
+            <select id="f-period">
+              <option value="day">工作日白天（常规）</option>
+              <option value="sat">周六</option>
+              <option value="sun">周日 / 公共假日</option>
+              <option value="night">夜间 / 非工作时间</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="border-top:1px dashed var(--line);padding-top:10px">
+          <label class="lb">服务参数</label>
+          <div class="row2">
+            <div>
+              <label class="lb" style="font-weight:500">预计等待小时</label>
+              <input type="number" id="f-wait" value="0" min="0" max="12" step="0.5">
+            </div>
+            <div>
+              <label class="lb" style="font-weight:500">卸船→空箱返还天数</label>
+              <input type="number" id="f-days" value="7" min="0" max="60" step="1">
+            </div>
+          </div>
+          <div class="row2" style="margin-top:8px">
+            <div>
+              <label class="lb" style="font-weight:500">港口超期仓储（天）</label>
+              <input type="number" id="f-storage" value="0" min="0" max="60" step="1">
+            </div>
+            <div>
+              <label class="lb" style="font-weight:500">燃油附加率（%）· 空=自动</label>
+              <input type="number" id="f-fuel" value="" min="0" max="80" step="0.5" placeholder="自动：市区30 / 偏远40">
+            </div>
+          </div>
+          <div class="row2" style="margin-top:8px">
+            <div>
+              <label class="lb" style="font-weight:500">报价加价率（%，可选）</label>
+              <input type="number" id="f-margin" value="0" min="0" max="50" step="0.5">
+            </div>
+            <div>
+              <label class="lb" style="font-weight:500">当前燃油档</label>
+              <input type="text" id="f-fuelshown" value="—" readonly style="background:#f8fafc;color:#64748b">
+            </div>
+          </div>
+          <label class="chk"><input type="checkbox" id="f-dehire" checked> 含空箱返还（dehire）</label>
+          <label class="chk"><input type="checkbox" id="f-fum"> 需要检疫熏蒸 / 清洗（$362+）</label>
+          <label class="chk"><input type="checkbox" id="f-weigh"> 需要地磅称重（$13.30）</label>
+        </div>
+
+        <div class="btn-row" style="margin-top:6px">
+          <button class="btn btn-primary" id="btn-calc">重新计算</button>
+          <button class="btn btn-ghost" id="btn-reset-form">重置参数</button>
+          <button class="btn btn-ghost" id="btn-sample">载入示例</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- RESULTS ---------- -->
+    <div class="res-stack" id="results">
+      <div class="verdict green" id="verdict">
+        <div class="icon">✅</div>
+        <div style="flex:1">
+          <h3 id="verdict-title">可以整柜直达派送</h3>
+          <p id="verdict-sub">—</p>
+          <div class="chips" id="verdict-chips"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h"><h2>路线与区域</h2><span class="hint" id="route-hint"></span></div>
+        <div class="panel-b">
+          <div class="routecard">
+            <div class="rc"><div class="k">到港港口</div><div class="v" id="r-port">—</div></div>
+            <div class="rc"><div class="k">目的地</div><div class="v" id="r-dest">—</div></div>
+            <div class="rc"><div class="k">公路里程</div><div class="v" id="r-km">—</div></div>
+            <div class="rc"><div class="k">区域等级</div><div class="v" id="r-zone">—</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-h">
+          <h2>费用明细</h2>
+          <span class="hint">基准价 · 区间 = 市场波动（非承诺报价）</span>
+        </div>
+        <div class="panel-b" style="padding-top:4px">
+          <table class="cost" id="cost-table">
+            <thead><tr><th style="width:26%">收费项目</th><th>计算依据 / 说明</th><th class="amt" style="width:12%">基准 (AUD)</th><th class="amt" style="width:16%">参考区间</th></tr></thead>
+            <tbody id="cost-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="total-card">
+        <div>
+          <div class="tk" id="t-label">门到门合计（含 10% GST）</div>
+          <div class="tv" id="t-total">—</div>
+          <div class="range" id="t-range">—</div>
+        </div>
+        <div style="text-align:right">
+          <div class="tk">不含 GST 小计</div>
+          <div class="tv" style="font-size:22px" id="t-exgst">—</div>
+          <div class="range" id="t-gst">—</div>
+        </div>
+      </div>
+
+      <div id="alt-box"></div>
+
+      <div class="note" id="notes-box"></div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btn-print">🖨 生成 / 打印报价单</button>
+        <button class="btn btn-ghost" id="btn-copy">复制文字摘要</button>
+        <button class="btn btn-ghost" id="btn-json">导出本次测算 JSON</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= TAB 2 : MODEL ======================= -->
+<section class="tab-pane" id="tab-model">
+  <div class="panel">
+    <div class="panel-h"><h2>一、计费公式（本工具使用的算法模型）</h2><span class="hint">可复现 · 可调参 · 每项均有来源或明确假设</span></div>
+    <div class="panel-b">
+      <div class="mono">含税总价 <span class="c">=</span> ( A + B + C + D + E ) × (1 + GST)
+
+<span class="c">A 海运与港口段</span>
+  A1 塔州码头操作/吊装费        = 按柜型固定值（20ft / 40ft）
+  A2 TasPorts Wharfage         = 官方费率 × TEU  <span class="o">（直航 106.45/TEU；Bass Strait 高频船东 67.47/TEU；40ft 计 2 TEU）</span>
+  A3 Bass Strait 海运费         = 仅“墨尔本中转”路径：20ft / 40ft 市场基准
+  A4 冷藏柜插电                = 73.07/天 × 港口天数（TasPorts 官方）
+  A5 检疫熏蒸/清洗              = 可选，362 起（TasPorts 官方）
+  A6 港口超期仓储              = 超期天数 × 日费率
+
+<span class="c">B 派送段（wharf cartage）</span>
+  B1 基础派送费                = 按柜型固定值（已含首个 25 km）
+  B2 超里程费                  = max(0, 公路里程 − 25) × 每公里单价
+  B3 区域附加                  = (B1 + B2) × 偏远系数（60–120km 4% / 120–220km 10% / &gt;220km 18%）
+  B4 现场作业附加              = 侧卸 / 吊车 / 转运 / 未铺装路 / CBD / 周末与夜间
+  B5 等待费                    = max(0, 等待小时 − 1h) × 小时费率
+
+<span class="c">C 空箱与时间费</span>
+  C1 空箱返还（dehire）         = 按柜型固定值（空箱拖回指定堆场）
+  C2 滞箱费（detention）        = max(0, 占用天数 − 免费天数) × 日费率
+  C3 超重附加                  = max(0, 毛重 − 公路限重) × 每吨费率
+
+<span class="c">D 燃油附加</span>
+  D1 燃油附加 = 燃油率（市区/偏远分档：&gt;60km 用偏远档）× (B1 + B2 + B3 + B4 + B5)
+
+<span class="c">E 加价与其他</span>
+  E1 报价加价 = 成本小计 × 加价率（可选，默认 0；用于把成本价转成对外报价）
+  E2 地磅 / 特殊许可 / POA 项（默认 0，按需勾选）
+
+<span class="o">区间</span>：海运费 ×0.85~1.20；派送费 ×0.90~1.12；附加作业 ×0.90~1.10；官方固定费不浮动。
+<span class="o">判定</span>：硬性阻断（岛屿/无路）→ ⛔ 不可整柜；需附加条件（侧卸/转运/许可/超重/偏远40ft）→ ⚠️ 可派送但受限；否则 ✅ 可整柜直达。</div>
+      <div style="margin-top:12px" class="note"><b>为什么用“分区/里程”而不是单一邮编价？</b> 塔州实际派送市场以“基础价（含 25 km 左右）+ 超出里程单价 + 偏远/作业附加”计价，且港口到客户的公路里程是成本主因（司机工时 + 燃油 + 空箱回程）。本模型用 OSRM 公路路由计算 4 大港口到每个邮编的真实里程，再套用市场费率结构，因此任意邮编都能给出一致、可解释的报价。</div>
+    </div>
+  </div>
+
+  <div class="two-col" style="margin-top:16px">
+    <div class="panel">
+      <div class="panel-h"><h2>二、默认费率一览（基准值）</h2><span class="pill off">官方</span> <span class="pill asm">市场假设</span></div>
+      <div class="panel-b" id="model-rates"></div>
+    </div>
+    <div class="panel">
+      <div class="panel-h"><h2>三、样例校验（本模型 vs 市场常见区间）</h2><span class="hint">市场区间为行业经验值，仅供校准</span></div>
+      <div class="panel-b">
+        <table class="cost"><thead><tr><th>场景</th><th class="amt">本模型基准</th><th class="amt">市场常见区间</th></tr></thead><tbody id="sample-body"></tbody></table>
+        <div class="tip" style="margin-top:8px">说明：本模型输出的是“可解释的基准价 + 区间”，不是承运人报价。实际成交价受船司协议、季节、空箱供应、燃油浮动、等待与堆存影响，建议以本表做快速筛选，再向 Strait Link / Spirit of Tasmania / 本地 cartage 供应商确认。</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <div class="panel-h"><h2>四、数据来源与市场依据</h2></div>
+    <div class="panel-b">
+      <ul class="src">
+        <li><b>TasPorts《Schedule of Port Charges》（2026-07-01 生效，FY2027）</b> — Wharfage：满载箱 106.45 澳元/TEU（King/Flinders 132.18），空箱 30.35/TEU；Bass Strait 高频船东：满载 67.47/TEU、空箱 0；冷藏柜插电 73.07/天；熏蒸 362/箱；地磅 13.30/次；King Island 侧卸设备 150/小时等。<a href="https://tasports.com.au/port-charges" target="_blank" rel="noopener">tasports.com.au/port-charges</a></li>
+        <li><b>Bass Island Line《Freight Tariff FY2027》（2026-09-01 至 2027-06-30）</b> — King Island 航线 20ft 集装箱 Devonport↔King Island 2,147 澳元（含 GST/港口费/燃油附加），重箱 2,370；40ft 为 POA；此费率用于本工具“岛屿不可整柜直达”的替代方案估算。<a href="https://bassislandline.com.au/freight-tariff" target="_blank" rel="noopener">bassislandline.com.au/freight-tariff</a></li>
+        <li><b>Strait Link Shipping</b> — 墨尔本–伯尼每日滚装，经营 FCL/冷藏柜/拖车，塔州内有 Hobart / Launceston / Devonport / Burnie 堆场，提供全塔州 door-to-door；本工具“墨尔本中转”路径按此模式建模。<a href="https://straitlink.com.au/our-services/" target="_blank" rel="noopener">straitlink.com.au/our-services</a></li>
+        <li><b>Spirit of Tasmania（TT-Line）Freight</b> — 墨尔本（吉朗）–德文波特滚装，塔州约 20% 跨海货运量；本工具中 Devonport 到港口径按其码头（East Devonport）建模。<a href="https://www.spiritoftasmania.com.au/" target="_blank" rel="noopener">spiritoftasmania.com.au</a></li>
+        <li><b>Fruit Growers Tasmania《Bass Strait Freight Workshop》</b> — 引用 Tasmanian Freight Equalisation Scheme（TFES）标准：国内货运最高补贴 855 澳元/TEU（进出口中转运 700 澳元/TEU）；该数值从侧面印证跨海单 TEU 海运费量级，本工具默认 Bass Strait 海运价即以此为锚并叠加港口操作与市场溢价。<a href="https://www.fruitgrowerstas.org.au/assets/Bass_Strait_Freight_Workshop.pdf" target="_blank" rel="noopener">fruitgrowerstas.org.au（PDF）</a></li>
+        <li><b>Tasmanian sea freight task（塔州政府信息文件）</b> — 跨海货运结构、港口与航线背景。<a href="https://www.infrastructure.tas.gov.au/__data/assets/pdf_file/0012/134211/Information_Paper_3_-_Tasmanian_sea_freight.pdf" target="_blank" rel="noopener">infrastructure.tas.gov.au（PDF）</a></li>
+        <li><b>公路里程</b> — 使用 OSRM 公开路由引擎（OpenStreetMap 路网）计算 4 个港口到每个邮编代表城镇的实际驾车里程与时长；邮编代表点优先采用 GeoNames 人口最大的城镇坐标（避免邮编几何中心落在无人区）。</li>
+        <li><b>澳洲燃油附加（FSC）基准</b> — GPSM 2026-06 卡车燃油附加指数：NSW/VIC 26%、QLD/WA 28%、SA 30%；2026-10 车队实收（市区/偏远）可达 30%–50%。塔州无独立公开指数，工具默认市区 30% / 偏远 40%（可在“费率设置”改为车队当周实收值）。</li>
+        <li><b>与《全澳FCL尾端派送核算系统 v7》互补</b> — v7 覆盖除塔州/北领地外的澳洲大陆（2,696 邮编 × 20 港真实路网）；本工具专门补齐塔州 4 大集装箱港 + 120 个邮编、Bass Strait 两段式路径与岛内海运方案，两者口径一致（真实公路里程 + 基础价 + 里程费 + 燃油 + 附加）。</li>
+        <li><b>市场费率（标注“市场假设”的项）</b> — 基础派送费、$/km、侧卸/吊车/转运、等待、滞箱、dehire、燃油附加、Bass Strait 海运费、码头操作费等，按澳洲/塔州 FCL 拖车与货代行业常见区间校准，并在“费率设置”中开放全部系数，用户可按自身协议价替换。</li>
+      </ul>
+      <div class="note" style="margin-top:12px"><b>重要局限：</b>塔州本地的 wharf cartage、Bass Strait 舱位与滞箱费率均为商业协议价，不对外公开。本工具把“官方公布费率”与“市场校准假设”分层呈现，任何“市场假设”项都可以在设置页改成贵司实际协议价——改完后所有邮编报价会立即按新费率重算，从而成为贵司内部的报价引擎。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= TAB 3 : POSTCODES ======================= -->
+<section class="tab-pane" id="tab-pc">
+  <div class="panel">
+    <div class="panel-h">
+      <h2>塔州邮编 → 港口里程 → 区域等级</h2>
+      <span class="hint">点击任意行可载入报价计算器</span>
+      <input type="text" id="pc-filter" placeholder="筛选：邮编 / 城镇 / 区域" style="margin-left:auto;max-width:280px">
+    </div>
+    <div class="panel-b">
+      <div class="tbl-wrap">
+        <table class="pc">
+          <thead><tr><th>邮编</th><th>代表城镇</th><th>最近港口</th><th class="amt">里程(km)</th><th>区域</th><th>标签</th><th>四港里程（H / BB / DP / BU）</th></tr></thead>
+          <tbody id="pc-body"></tbody>
+        </table>
+      </div>
+      <div class="tip" style="margin-top:8px">区域：A 都市 ≤25km ・ B 近郊 25–60km ・ C 区域 60–120km ・ D 偏远 120–220km ・ E 极偏远 &gt;220km ・ 岛屿 = 无法整柜直达。里程为港口→代表城镇的公路驾车里程（OSRM/OSM 路网）。</div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= TAB 4 : SETTINGS ======================= -->
+<section class="tab-pane" id="tab-settings">
+  <div class="panel">
+    <div class="panel-h"><h2>费率设置（本机浏览器保存）</h2><span class="hint">修改后立即影响所有报价；可导出/导入 JSON 给同事使用</span></div>
+    <div class="panel-b">
+      <div class="note" style="margin-bottom:14px">默认值来自 TasPorts 官方费率 + 市场校准假设。若贵司有协议价（例如 Strait Link / Spirit 的合同海运费、本地 cartage 合同价、船司滞箱费率），直接把下面数字改成实际值即可。所有金额均为 <b>不含 GST（AUD）</b>。</div>
+      <div class="settings-grid" id="settings-grid"></div>
+      <div class="set-foot">
+        <button class="btn btn-primary" id="btn-save-rates">保存到本机</button>
+        <button class="btn btn-ghost" id="btn-reset-rates">恢复默认费率</button>
+        <button class="btn btn-ghost" id="btn-export-rates">导出费率 JSON</button>
+        <button class="btn btn-ghost" id="btn-import-rates">导入费率 JSON</button>
+        <button class="btn btn-ghost" id="btn-print-rates">打印当前费率</button>
+      </div>
+      <div class="tip" id="save-tip" style="margin-top:8px"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div><b>TAS FCL Delivery Calculator</b> · 版本 v1.0 · 构建 2026-10-20 · 单文件离线运行（数据内嵌，无需联网）</div>
+  <div class="disc">免责声明：本工具为基于公开费率与市场基准的估算模型，输出结果不等同于承运人/货代正式报价。实际派送费取决于船司协议价、燃油与旺季附加、空箱供应、港口拥堵、现场等待与许可等；报价前请与承运人确认柜型、毛重、场地与时段。塔州岛屿（King Island / Flinders Island）无法整柜公路直达，须拆柜或经岛内海运，本工具给出替代方案估算。数据核对时间：2026-10-20。</div>
+</footer>
+
+<div id="quote-print"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   内嵌数据：120 个塔州邮编
+   每条 = [邮编, 代表城镇, Hobart km, Bell Bay km, Devonport km, Burnie km, 岛屿标记]
+   ============================================================ */
+const PC_DATA = [["7000","Hobart",1.3,245.4,278.9,325.0,0],["7001","Hobart",1.3,245.4,278.9,325.0,0],["7002","North Hobart",2.4,245.1,278.6,324.8,0],["7004","South Hobart",2.6,248.3,281.9,328.0,0],["7005","Sandy Bay",1.7,247.7,281.2,327.4,0],["7006","Sandy Bay",1.7,247.7,281.2,327.4,0],["7007","Mount Nelson",5.9,251.7,285.2,331.4,0],["7008","New Town",4.2,242.5,276.0,322.2,0],["7009","Moonah",6.3,240.8,274.4,320.5,0],["7010","Glenorchy",9.0,239.1,272.6,318.7,0],["7011","Claremont",15.6,232.1,265.6,311.8,0],["7012","Collinsvale",19.7,242.3,275.8,322.0,0],["7015","Lindisfarne",5.8,237.7,271.3,317.4,0],["7016","Risdon Vale",11.1,231.8,265.4,311.5,0],["7017","Old Beach",18.7,232.1,265.6,311.8,0],["7018","Howrah",11.9,241.7,275.2,321.4,0],["7019","Rokeby",15.4,245.2,278.7,324.9,0],["7020","Sandford",22.1,244.6,278.1,324.3,0],["7021","Lauderdale",19.6,242.0,275.6,321.7,0],["7022","South Arm",39.4,261.8,295.4,341.5,0],["7023","Opossum Bay",43.1,265.5,299.1,345.2,0],["7024","Cremorne",26.8,249.3,282.8,329.0,0],["7025","Richmond",27.1,218.1,251.7,297.8,0],["7026","Campania",35.1,210.0,243.5,289.7,0],["7027","Colebrook",53.4,191.6,225.2,271.3,0],["7030","Bridgewater",21.2,226.4,259.9,306.1,0],["7050","Kingston",12.3,258.1,291.6,337.8,0],["7051","Kingston",12.3,258.1,291.6,337.8,0],["7052","Blackmans Bay",17.7,263.5,297.0,343.2,0],["7053","Taroona",9.9,255.9,289.5,335.6,0],["7054","Margate",19.6,265.3,298.9,345.0,0],["7055","Huntingfield",15.7,261.5,295.0,341.2,0],["7109","Huonville",38.5,284.3,317.8,363.9,0],["7112","Cygnet",54.2,299.9,333.5,379.6,0],["7113","Franklin",45.8,291.6,325.1,371.3,0],["7116","Geeveston",60.3,306.1,339.6,385.8,0],["7117","Dover",79.1,324.8,358.4,404.5,0],["7119","Stonor",82.0,176.6,210.2,256.3,0],["7120","Oatlands",83.6,162.4,195.9,242.1,0],["7139","Strathgordon",155.9,364.4,333.7,379.9,0],["7140","New Norfolk",35.9,244.8,243.8,289.9,0],["7150","Allens Rivulet",26.1,271.9,305.4,351.6,0],["7151","Casey",231.4,83.7,50.1,96.2,0],["7155","Kettering",31.8,277.6,311.1,357.2,0],["7162","Woodbridge",35.9,281.7,315.2,361.4,0],["7163","Middleton",45.8,291.6,325.1,371.3,0],["7170","Acton Park",20.7,237.8,271.3,317.5,0],["7171","Midway Point",22.8,233.8,267.3,313.5,0],["7172","Sorell",25.3,229.5,263.1,309.2,0],["7173","Dodges Ferry",37.4,242.2,275.8,321.9,0],["7174","Copping",47.2,252.0,285.6,331.7,0],["7175","Bream Creek",50.6,255.4,288.9,335.0,0],["7176","Kellevie",51.3,256.1,289.6,335.8,0],["7177","Dunalley",55.9,260.6,294.2,340.3,0],["7178","Murdunna",65.4,270.1,303.7,349.8,0],["7179","Eaglehawk Neck",75.1,279.9,313.4,359.6,0],["7180","Taranna",84.8,289.6,323.2,369.3,0],["7182","Port Arthur",95.0,299.8,333.4,379.5,0],["7183","Highcroft",107.0,311.8,345.3,391.5,0],["7184","Nubeena",100.8,305.6,339.2,385.3,0],["7185","Premaydena",94.3,299.0,332.6,378.7,0],["7186","Saltwater River",100.8,305.6,339.1,385.3,0],["7187","Koonya",91.0,295.8,329.4,375.5,0],["7190","Swansea",134.5,181.4,215.0,261.1,0],["7209","Ross",120.6,125.2,158.7,204.9,0],["7210","Campbell Town",133.2,113.0,146.5,192.7,0],["7211","Conara",148.2,106.4,139.9,186.1,0],["7212","Evandale",183.5,65.0,108.2,154.3,0],["7213","Avoca",168.3,126.5,160.0,206.1,0],["7214","Fingal",196.6,154.8,188.3,234.4,0],["7215","Bicheno",177.6,205.3,238.8,284.9,0],["7216","St Helens",253.9,168.8,245.6,291.7,0],["7248","Newnham",207.9,40.5,96.3,142.5,0],["7249","South Launceston",199.3,47.5,98.0,144.1,0],["7250","Launceston",201.3,45.5,89.4,135.5,0],["7252","Hillwood",230.2,20.4,91.4,137.5,0],["7253","George Town",250.6,5.8,103.8,149.9,0],["7254","Lebrina",237.0,46.8,125.4,171.5,0],["7255","Flinders Island 弗林德斯岛",null,null,null,null,1],["7256","King Island 国王岛",null,null,null,null,1],["7257","Cape Barren Island",439.3,214.7,299.2,345.3,0],["7258","White Hills",192.1,59.7,110.7,156.9,0],["7259","Nunamara",216.1,61.3,118.3,164.4,0],["7260","Scottsdale",257.4,71.1,159.5,205.7,0],["7261","Branxholm",282.8,97.0,185.0,231.1,0],["7262","Bridport",279.0,54.4,138.9,185.0,0],["7263","Ringarooma",285.7,99.9,187.9,234.0,0],["7264","Derby",290.2,104.3,192.3,238.5,0],["7265","Winnaleah",298.9,113.0,201.0,247.2,0],["7267","Karoola",226.1,37.4,110.2,156.4,0],["7268","Lilydale",227.8,43.4,116.2,162.3,0],["7270","Beaconsfield",241.1,30.6,66.1,112.2,0],["7275","Exeter",224.5,34.0,65.5,111.7,0],["7276","Gravelly Beach",226.5,30.1,70.1,116.3,0],["7277","Legana",213.4,46.6,77.9,124.0,0],["7290","Hadspen",201.7,57.7,87.2,133.4,0],["7291","Carrick",198.8,64.8,80.6,126.7,0],["7292","Hagley",208.9,74.9,71.4,117.6,0],["7300","Perth",182.6,62.4,99.8,145.9,0],["7301","Longford",189.0,68.6,95.6,141.8,0],["7302","Cressy",188.3,78.8,105.8,151.9,0],["7303","Westbury",213.6,68.4,67.1,113.2,0],["7304","Deloraine",204.5,82.2,51.5,97.6,0],["7305","Railton",259.6,102.1,22.4,66.7,0],["7306","Sheffield",266.2,118.5,33.2,70.9,0],["7307","Latrobe",270.8,92.0,10.8,57.0,0],["7310","Devonport",280.2,100.8,6.1,46.9,0],["7315","Ulverstone",297.1,117.7,23.0,29.8,0],["7316","Penguin",311.2,131.8,37.1,18.0,0],["7320","Burnie",325.0,145.6,50.9,0.6,0],["7321","Ridgley",336.0,156.6,61.9,13.7,0],["7322","Somerset",332.3,152.9,58.2,7.4,0],["7325","Wynyard",343.6,164.2,69.5,18.7,0],["7330","Smithton",408.4,229.0,134.3,83.5,0],["7331","Stanley",403.2,223.8,129.1,78.3,0],["7466","Gormanston",244.1,280.3,191.0,157.3,0],["7467","Queenstown",249.8,275.3,186.0,152.4,0],["7468","Strahan",289.5,303.1,213.8,180.1,0],["7469","Zeehan",286.9,261.9,172.6,138.9,0],["7470","Rosebery",303.9,232.8,143.5,109.8,0]];
+const LOC_MAP = {"BATHURST STREET PO":"7000","GLEBE":"7000","HOBART":"7001","MOUNT STUART":"7000","NORTH HOBART":"7002","QUEENS DOMAIN":"7000","WEST HOBART":"7000","TASMAN ISLAND":"7001","BATTERY POINT":"7004","SOUTH HOBART":"7004","DYNNYRNE":"7005","LOWER SANDY BAY":"7005","SANDY BAY":"7006","UNIVERSITY OF TASMANIA":"7005","MOUNT NELSON":"7007","TOLMANS HILL":"7007","CORNELIAN BAY":"7008","LENAH VALLEY":"7008","NEW TOWN":"7008","DERWENT PARK":"7009","LUTANA":"7009","MOONAH":"7009","WEST MOONAH":"7009","DOWSING POINT":"7010","ELWICK":"7010","GLENORCHY":"7010","GOODWOOD":"7010","MONTROSE":"7010","ROSETTA":"7010","AUSTINS FERRY":"7011","BERRIEDALE":"7011","CHIGWELL":"7011","CLAREMONT":"7011","COLLINSVALE":"7012","GLENLUSK":"7012","FLAGSTAFF GULLY":"7015","GEILSTON BAY":"7015","LINDISFARNE":"7015","ROSE BAY":"7015","RISDON VALE":"7016","GRASSTREE HILL":"7017","HONEYWOOD":"7017","OLD BEACH":"7017","OTAGO":"7017","RISDON":"7017","TEA TREE":"7017","BELLERIVE":"7018","HOWRAH":"7018","MONTAGU BAY":"7018","MORNINGTON":"7018","ROSNY":"7018","ROSNY PARK":"7018","TRANMERE":"7018","WARRANE":"7018","CLARENDON VALE":"7019","OAKDOWNS":"7019","ROKEBY":"7019","CLIFTON BEACH":"7020","SANDFORD":"7020","LAUDERDALE":"7021","SOUTH ARM":"7022","OPOSSUM BAY":"7023","CREMORNE":"7024","DULCOT":"7025","RICHMOND":"7025","CAMPANIA":"7026","COLEBROOK":"7027","APSLEY":"7030","ARTHURS LAKE":"7030","BAGDAD":"7030","BAGDAD NORTH":"7030","BOTHWELL":"7030","BRIDGEWATER":"7030","BRIGHTON":"7030","BROADMARSH":"7030","CRAMPS BAY":"7030","DROMEDARY":"7030","DYSART":"7030","ELDERSLIE":"7030","FLINTSTONE":"7030","GAGEBROOK":"7030","GRANTON":"7030","HERDSMANS COVE":"7030","HERMITAGE":"7030","INTERLAKEN":"7030","JERICHO":"7030","KEMPTON":"7030","LAKE SORELL":"7030","LIAWENEE":"7030","LOWER MARSHES":"7030","MANGALORE":"7030","MELTON MOWBRAY":"7030","MIENA":"7030","MILLERS BLUFF":"7030","MORASS BAY":"7030","PELHAM":"7030","PONTVILLE":"7030","SHANNON":"7030","STEPPES":"7030","TODS CORNER":"7030","WADDAMANA":"7030","WILBURVILLE":"7030","ALBION HEIGHTS":"7050","KINGSTON":"7051","KINGSTON BEACH":"7050","BLACKMANS BAY":"7052","BONNET HILL":"7053","TAROONA":"7053","BARRETTA":"7054","CONINGHAM":"7054","ELECTRONA":"7054","FERN TREE":"7054","HOWDEN":"7054","LESLIE VALE":"7054","LOWER SNUG":"7054","MARGATE":"7054","NEIKA":"7054","NIERINNA":"7054","PIERSONS POINT":"7054","RIDGEWAY":"7054","SNUG":"7054","TINDERBOX":"7054","WELLINGTON PARK":"7054","HUNTINGFIELD":"7055","CATAMARAN":"7109","CRABTREE":"7109","CRADOC":"7109","GLAZIERS BAY":"7109","GLEN HUON":"7109","GLENDEVIE":"7109","GROVE":"7109","HASTINGS":"7109","HUONVILLE":"7109","IDA BAY":"7109","JUDBURY":"7109","LONNAVALE":"7109","LOWER LONGLEY":"7109","LOWER WATTLE GROVE":"7109","LUCASTON":"7109","LUNE RIVER":"7109","LYMINGTON":"7109","MOUNTAIN RIVER":"7109","PETCHEYS BAY":"7109","RAMINEA":"7109","RANELAGH":"7109","RECHERCHE":"7109","SOUTHPORT":"7109","SOUTHPORT LAGOON":"7109","STRATHBLANE":"7109","WATERLOO":"7109","WATTLE GROVE":"7109","WOODSTOCK":"7109","ABELS BAY":"7112","CHARLOTTE COVE":"7112","CYGNET":"7112","DEEP BAY":"7112","EGGS AND BACON BAY":"7112","GARDEN ISLAND CREEK":"7112","GARDNERS BAY":"7112","HUON ISLAND":"7112","NICHOLLS RIVULET":"7112","RANDALLS BAY":"7112","VERONA SANDS":"7112","FRANKLIN":"7113","BROOKS BAY":"7116","CAIRNS BAY":"7116","CASTLE FORBES BAY":"7116","GEEVESTON":"7116","POLICE POINT":"7116","PORT HUON":"7116","SURGES BAY":"7116","SURVEYORS BAY":"7116","DOVER":"7117","STONOR":"7119","ANDOVER":"7120","ANTILL PONDS":"7120","BADEN":"7120","LEMONT":"7120","LEVENDALE":"7120","MOUNT SEYMOUR":"7120","OATLANDS":"7120","PARATTAH":"7120","PAWTELLA":"7120","RHYNDASTON":"7120","STONEHENGE":"7120","SWANSTON":"7120","TIBERIAS":"7120","TUNBRIDGE":"7120","TUNNACK":"7120","WHITEFOORD":"7120","WOODBURY":"7120","WOODSDALE":"7120","YORK PLAINS":"7120","STRATHGORDON":"7139","BLACK HILLS":"7140","BOYER":"7140","BRADYS LAKE":"7140","BRONTE PARK":"7140","BUSHY PARK":"7140","BUTLERS GORGE":"7140","DEE":"7140","DERWENT BRIDGE":"7140","ELLENDALE":"7140","FENTONBURY":"7140","FITZGERALD":"7140","FLORENTINE":"7140","GLENFERN":"7140","GLENORA":"7140","GRETNA":"7140","HAMILTON":"7140","HAYES":"7140","HOLLOW TREE":"7140","KARANJA":"7140","LACHLAN":"7140","LAKE ST CLAIR":"7140","LAWITTA":"7140","LITTLE PINE LAGOON":"7140","LONDON LAKES":"7140","MACQUARIE PLAINS":"7140","MAGRA":"7140","MALBINA":"7140","MAYDENA":"7140","MEADOWBANK":"7140","MOLESWORTH":"7140","MOOGARA":"7140","MOUNT FIELD":"7140","MOUNT LLOYD":"7140","NATIONAL PARK":"7140","NEW NORFOLK":"7140","OSTERLEY":"7140","OUSE":"7140","PLENTY":"7140","ROSEGARLAND":"7140","SORELL CREEK":"7140","STRICKLAND":"7140","STYX":"7140","TARRALEAH":"7140","TYENNA":"7140","UXBRIDGE":"7140","VICTORIA VALLEY":"7140","WAYATINAH":"7140","WESTERWAY":"7140","ADVENTURE BAY":"7150","ALLENS RIVULET":"7150","ALONNAH":"7150","APOLLO BAY":"7150","BARNES BAY":"7150","DENNES POINT":"7150","GORDON":"7150","GREAT BAY":"7150","KAOOTA":"7150","KILLORA":"7150","LONGLEY":"7150","LUNAWANNA":"7150","NORTH BRUNY":"7150","OYSTER COVE":"7150","PELVERATA":"7150","SANDFLY":"7150","SIMPSONS BAY":"7150","SOUTH BRUNY":"7150","UPPER WOODSTOCK":"7150","CASEY":"7151","DAVIS":"7151","HEARD ISLAND":"7151","MACQUARIE":"7151","MACQUARIE ISLAND":"7151","MAWSON":"7151","MCDONALD ISLANDS":"7151","KETTERING":"7155","BIRCHS BAY":"7162","WOODBRIDGE":"7162","FLOWERPOT":"7163","MIDDLETON":"7163","ACTON PARK":"7170","CAMBRIDGE":"7170","MOUNT RUMNEY":"7170","ROCHES BEACH":"7170","SEVEN MILE BEACH":"7170","MIDWAY POINT":"7171","PENNA":"7171","NUGENT":"7172","ORIELTON":"7172","PAWLEENA":"7172","SORELL":"7172","WATTLE HILL":"7172","CARLTON":"7173","CARLTON RIVER":"7173","CONNELLYS MARSH":"7173","DODGES FERRY":"7173","FORCETT":"7173","LEWISHAM":"7173","PRIMROSE SANDS":"7173","COPPING":"7174","BREAM CREEK":"7175","MARION BAY":"7175","KELLEVIE":"7176","BOOMER BAY":"7177","DUNALLEY":"7177","MURDUNNA":"7178","EAGLEHAWK NECK":"7179","TARANNA":"7180","CAPE PILLAR":"7182","FORTESCUE":"7182","PORT ARTHUR":"7182","HIGHCROFT":"7183","CAPE RAOUL":"7184","NUBEENA":"7184","STORMLEA":"7184","WHITE BEACH":"7184","PREMAYDENA":"7185","SALTWATER RIVER":"7186","SLOPING MAIN":"7186","KOONYA":"7187","APSLAWN":"7190","BUCKLAND":"7190","CRANBROOK":"7190","DOLPHIN SANDS":"7190","LITTLE SWANPORT":"7190","MARIA ISLAND":"7190","ORFORD":"7190","PONTYPOOL":"7190","RHEBAN":"7190","ROCKY HILLS":"7190","RUNNYMEDE":"7190","SPRING BEACH":"7190","SWANSEA":"7190","TRIABUNNA":"7190","ROSS":"7209","TOOMS LAKE":"7209","CAMPBELL TOWN":"7210","LAKE LEAKE":"7210","CLEVELAND":"7211","CONARA":"7211","EPPING FOREST":"7211","BEN LOMOND":"7212","BLESSINGTON":"7212","BURNS CREEK":"7212","DEDDINGTON":"7212","EVANDALE":"7212","NILE":"7212","UPPER BLESSINGTON":"7212","WESTERN JUNCTION":"7212","AVOCA":"7213","ROSSARDEN":"7213","ROYAL GEORGE":"7213","STORYS CREEK":"7213","FINGAL":"7214","MANGANA":"7214","MATHINNA":"7214","UPPER ESK":"7214","BEAUMARIS":"7215","BICHENO":"7215","CHAIN OF LAGOONS":"7215","COLES BAY":"7215","CORNWALL":"7215","DOUGLAS RIVER":"7215","DOUGLAS-APSLEY":"7215","FALMOUTH":"7215","FOUR MILE CREEK":"7215","FREYCINET":"7215","FRIENDLY BEACHES":"7215","GRAY":"7215","SCAMANDER":"7215","SEYMOUR":"7215","ST MARYS":"7215","UPPER SCAMANDER":"7215","AKAROA":"7216","ANSONS BAY":"7264","BINALONG BAY":"7216","GOSHEN":"7216","GOULDS COUNTRY":"7216","LOTTAH":"7216","PYENGANA":"7216","ST HELENS":"7216","STIEGLITZ":"7216","THE GARDENS":"7216","ALANVALE":"7248","INVERESK":"7248","INVERMAY":"7248","MAYFIELD":"7248","MOWBRAY":"7248","MOWBRAY HEIGHTS":"7248","NEWNHAM":"7248","ROCHERLEA":"7248","GLEN DHU":"7249","KINGS MEADOWS":"7249","PUNCHBOWL":"7249","SANDHILL":"7249","SOUTH LAUNCESTON":"7249","YOUNGTOWN":"7249","BLACKSTONE HEIGHTS":"7250","EAST LAUNCESTON":"7250","ELPHIN":"7250","LAUNCESTON":"7250","NEWSTEAD":"7250","NORWOOD":"7250","NORWOOD AVENUE PO":"7250","PROSPECT":"7250","PROSPECT VALE":"7250","RAVENSWOOD":"7250","RIVERSIDE":"7250","ST LEONARDS":"7250","SUMMERHILL":"7250","TRAVELLERS REST":"7250","TREVALLYN":"7250","WAVERLEY":"7250","WEST LAUNCESTON":"7250","BEECHFORD":"7252","DILSTON":"7252","HILLWOOD":"7252","LEFROY":"7252","LULWORTH":"7252","MOUNT DIRECTION":"7252","PIPERS RIVER":"7252","STONY HEAD":"7252","SWAN BAY":"7252","WEYMOUTH":"7252","WINDERMERE":"7252","BELL BAY":"7253","GEORGE TOWN":"7253","LONG REACH":"7253","LOW HEAD":"7253","BELLINGHAM":"7254","GOLCONDA":"7254","LEBRINA":"7254","PIPERS BROOK":"7254","RETREAT":"7254","TUNNEL":"7254","WYENA":"7254","BLUE ROCKS":"7255","EMITA":"7255","KILLIECRANKIE":"7255","LACKRANA":"7255","LADY BARRON":"7255","LEEKA":"7255","LOCCOTA":"7255","LUGHRATA":"7255","MEMANA":"7255","PALANA":"7255","RANGA":"7255","STRZELECKI":"7255","WHITEMARK":"7255","WINGAROO":"7255","BUNGAREE":"7256","CURRIE":"7256","EGG LAGOON":"7256","GRASSY":"7256","LOORANA":"7256","LYMWOOD":"7256","NARACOOPA":"7256","NUGARA":"7256","PEARSHAPE":"7256","PEGARAH":"7256","REEKARA":"7256","SEA ELEPHANT":"7256","SURPRISE BAY":"7256","WICKHAM":"7256","YAMBACOONA":"7256","YARRA CREEK":"7256","CAPE BARREN ISLAND":"7257","BREADALBANE":"7258","RELBIA":"7258","WHITE HILLS":"7258","MYRTLE BANK":"7259","NUNAMARA":"7259","PATERSONIA":"7259","TARGA":"7259","TAYENE":"7259","BLUMONT":"7260","CUCKOO":"7260","FORESTER":"7260","JETSONVILLE":"7260","KAMONA":"7260","LIETINNA":"7260","LISLE":"7260","NABOWLA":"7260","NORTH SCOTTSDALE":"7260","SCOTTSDALE":"7260","SOUTH SPRINGFIELD":"7260","SPRINGFIELD":"7260","TONGANAH":"7260","TULENDEENA":"7260","WEST SCOTTSDALE":"7260","BRANXHOLM":"7261","WARRENTINNA":"7261","BRIDPORT":"7262","TOMAHAWK":"7262","WATERHOUSE":"7262","ALBERTON":"7263","LEGERWOOD":"7263","RINGAROOMA":"7263","TALAWA":"7263","TRENAH":"7263","BOOBYALLA":"7264","CAPE PORTLAND":"7264","DERBY":"7264","EDDYSTONE":"7264","EDDYSTONE POINT":"7264","GLADSTONE":"7264","HERRICK":"7264","MOORINA":"7264","MOUNT WILLIAM":"7264","MUSSELROE BAY":"7264","PIONEER":"7264","RUSHY LAGOON":"7264","SOUTH MOUNT CAMERON":"7264","TELITA":"7264","WELDBOROUGH":"7264","BANCA":"7265","WINNALEAH":"7265","BANGOR":"7267","KAROOLA":"7267","LALLA":"7267","LOWER TURNERS MARSH":"7267","TURNERS MARSH":"7267","LILYDALE":"7268","NORTH LILYDALE":"7268","UNDERWOOD":"7268","BADGER HEAD":"7270","BEACONSFIELD":"7270","BEAUTY POINT":"7270","CLARENCE POINT":"7270","FLOWERY GULLY":"7270","GREENS BEACH":"7270","ILFRAVILLE":"7270","KAYENA":"7270","KELSO":"7270","ROWELLA":"7270","SIDMOUTH":"7270","YORK TOWN":"7270","BLACKWALL":"7275","DEVIOT":"7275","EXETER":"7275","FRANKFORD":"7275","GLENGARRY":"7275","HOLWELL":"7275","LANENA":"7275","LOIRA":"7275","NOTLEY HILLS":"7275","ROBIGANA":"7275","SWAN POINT":"7275","WINKLEIGH":"7275","GRAVELLY BEACH":"7276","BRIDGENORTH":"7277","GRINDELWALD":"7277","LEGANA":"7277","ROSEVEARS":"7277","HADSPEN":"7290","CARRICK":"7291","HAGLEY":"7292","QUAMBY BEND":"7292","ROSEVALE":"7292","SELBOURNE":"7292","WESTWOOD":"7292","DEVON HILLS":"7300","PERTH":"7300","POWRANNA":"7300","BISHOPSBOURNE":"7301","BLACKWOOD CREEK":"7301","LIFFEY":"7301","LONGFORD":"7301","TOIBERRY":"7301","BRACKNELL":"7302","CRESSY":"7302","POATINA":"7302","BIRRALEE":"7303","CLUAN":"7303","EXTON":"7303","OAKS":"7303","OSMASTON":"7303","WESTBURY":"7303","WHITEMORE":"7303","BRANDUM":"7304","BREONA":"7304","CAVESIDE":"7304","CENTRAL PLATEAU":"7304","CHUDLEIGH":"7304","DAIRY PLAINS":"7304","DELORAINE":"7304","DOCTORS POINT":"7304","DUNORLAN":"7304","ELIZABETH TOWN":"7304","GOLDEN VALLEY":"7304","JACKEYS MARSH":"7304","KIMBERLEY":"7304","LIENA":"7304","MAYBERRY":"7304","MEANDER":"7304","MERSEY FOREST":"7304","MOLE CREEK":"7304","MOLTEMA":"7304","MONTANA":"7304","NEEDLES":"7304","PARKHAM":"7304","QUAMBY BROOK":"7304","RED HILLS":"7304","REEDY MARSH":"7304","REYNOLDS NECK":"7304","WALLS OF JERUSALEM":"7304","WEEGENA":"7304","WEETAH":"7304","WESTERN CREEK":"7304","MERSEYLEA":"7305","RAILTON":"7305","SUNNYSIDE":"7305","ACACIA HILLS":"7306","BARRINGTON":"7306","BEULAH":"7306","CETHANA":"7306","CLAUDE ROAD":"7306","CRADLE MOUNTAIN":"7306","GOWRIE PARK":"7306","LORINNA":"7306","LOWER BARRINGTON":"7306","LOWER BEULAH":"7306","MIDDLESEX":"7306","MOUNT ROLAND":"7306","NOOK":"7306","NOWHERE ELSE":"7306","PARADISE":"7306","PROMISED LAND":"7306","ROLAND":"7306","SHEFFIELD":"7306","STAVERTON":"7306","STOODLEY":"7306","WEST KENTISH":"7306","BAKERS BEACH":"7307","HARFORD":"7307","HAWLEY BEACH":"7307","LATROBE":"7307","MORIARTY":"7307","NORTHDOWN":"7307","PORT SORELL":"7307","SASSAFRAS":"7307","SHEARWATER":"7307","SQUEAKING POINT":"7307","THIRLSTANE":"7307","WESLEY VALE":"7307","ABERDEEN":"7310","AMBLESIDE":"7310","DEVONPORT":"7310","DON":"7310","EAST DEVONPORT":"7310","ERRIBA":"7310","EUGENANA":"7310","FORTH":"7310","FORTHSIDE":"7310","KINDRED":"7310","LILLICO":"7310","LOWER WILMOT":"7310","MELROSE":"7310","MIANDETTA":"7310","MOINA":"7310","PALOONA":"7310","QUOIBA":"7310","SOUTH SPREYTON":"7310","SPREYTON":"7310","STONY RISE":"7310","TARLETON":"7310","TUGRAH":"7310","WEST DEVONPORT":"7310","WILMOT":"7310","ABBOTSHAM":"7315","CASTRA":"7315","GAWLER":"7315","GUNNS PLAINS":"7315","LEITH":"7315","LOONGANA":"7315","NIETTA":"7315","NORTH MOTTON":"7315","PRESTON":"7315","SOUTH NIETTA":"7315","SOUTH PRESTON":"7315","SPALFORD":"7315","SPRENT":"7315","TURNERS BEACH":"7315","ULVERSTONE":"7315","UPPER CASTRA":"7315","WEST ULVERSTONE":"7315","CAMENA":"7316","CUPRONA":"7316","HEYBRIDGE":"7316","HOWTH":"7316","LOYETEA":"7316","PENGUIN":"7316","PRESERVATION BAY":"7316","RIANA":"7316","SOUTH RIANA":"7316","SULPHUR CREEK":"7316","WEST PINE":"7316","ACTON":"7320","BROOKLYN":"7320","BURNIE":"7320","CAMDALE":"7320","COOEE":"7320","DOWNLANDS":"7320","EMU HEIGHTS":"7320","HAVENVIEW":"7320","HILLCREST":"7320","MONTELLO":"7320","OCEAN VISTA":"7320","PARK GROVE":"7320","PARKLANDS":"7320","ROMAINE":"7320","ROUND HILL":"7320","SHOREWELL PARK":"7320","SOUTH BURNIE":"7320","UPPER BURNIE":"7320","WIVENHOE":"7320","BLACK RIVER":"7321","BOAT HARBOUR":"7321","BOAT HARBOUR BEACH":"7321","CHASM CREEK":"7321","CORINNA":"7321","COWRIE POINT":"7321","CRAYFISH CREEK":"7321","DETENTION":"7321","EAST CAM":"7321","EAST RIDGLEY":"7321","EDGCUMBE BEACH":"7321","GUILDFORD":"7321","HAMPSHIRE":"7321","HELLYER":"7321","HIGHCLERE":"7321","LUINA":"7321","MAWBANNA":"7321","MONTUMANA":"7321","MOOREVILLE":"7321","NATONE":"7321","PARRAWE":"7321","PORT LATTA":"7321","RIDGLEY":"7321","ROCKY CAPE":"7321","SAVAGE RIVER":"7321","SISTERS BEACH":"7321","STOWPORT":"7321","TEWKESBURY":"7321","TULLAH":"7321","UPPER NATONE":"7321","UPPER STOWPORT":"7321","WARATAH":"7321","WEST MOOREVILLE":"7321","WEST RIDGLEY":"7321","WILTSHIRE":"7321","SOMERSET":"7322","CALDER":"7325","DOCTORS ROCKS":"7325","ELLIOTT":"7325","FLOWERDALE":"7325","HENRIETTA":"7325","LAPOINYA":"7325","MEUNNA":"7325","MILABENA":"7325","MOORLEAH":"7325","MOUNT HICKS":"7325","MYALLA":"7325","OLDINA":"7325","OONAH":"7325","PREOLENNA":"7325","SEABROOK":"7325","SISTERS CREEK":"7325","TABLE CAPE":"7325","TAKONE":"7325","WEST TAKONE":"7325","WYNYARD":"7325","YOLLA":"7325","ALCOMIE":"7330","ARTHUR RIVER":"7330","BRITTONS SWAMP":"7330","BROADMEADOWS":"7330","CHRISTMAS HILLS":"7330","COUTA ROCKS":"7330","EDITH CREEK":"7330","FOREST":"7330","HUNTER ISLAND":"7330","IRISHTOWN":"7330","LILEAH":"7330","MARRAWAH":"7330","MELLA":"7330","MENGHA":"7330","MONTAGU":"7330","NABAGEENA":"7330","NELSON BAY":"7330","REDPA":"7330","ROBBINS ISLAND":"7330","ROGER RIVER":"7330","SCOPUS":"7330","SCOTCHTOWN":"7330","SMITHTON":"7330","SOUTH FOREST":"7330","TEMMA":"7330","THREE HUMMOCK ISLAND":"7330","TOGARI":"7330","TROWUTTA":"7330","WEST MONTAGU":"7330","WOOLNORTH":"7330","STANLEY":"7331","GORMANSTON":"7466","LAKE MARGARET":"7467","QUEENSTOWN":"7467","MACQUARIE HEADS":"7468","STRAHAN":"7468","GRANVILLE HARBOUR":"7469","RENISON BELL":"7469","TRIAL HARBOUR":"7469","ZEEHAN":"7469","ROSEBERY":"7470"};
+
+/* ============================ 常量 ============================ */
+const PORTS = {
+  hobart:   {id:'hobart',   cn:'霍巴特',     en:'Hobart',     terminal:'Macquarie Wharf', route:'direct'},
+  bellbay:  {id:'bellbay',  cn:'贝尔湾',     en:'Bell Bay',   terminal:'Bell Bay 集装箱码头', route:'direct'},
+  devonport:{id:'devonport',cn:'德文波特',   en:'Devonport',  terminal:'East Devonport（Spirit of Tasmania）', route:'bass'},
+  burnie:   {id:'burnie',   cn:'伯尼',       en:'Burnie',     terminal:'Port of Burnie（Strait Link）', route:'bass'}
+};
+const TYPES = [
+  {id:'20GP', label:'20GP', sub:'标准柜',   size:'20', teu:1, tare:2.2, payload:21.5, reefer:false, oog:false},
+  {id:'40GP', label:'40GP', sub:'标准柜',   size:'40', teu:2, tare:3.8, payload:26.5, reefer:false, oog:false},
+  {id:'40HC', label:'40HC', sub:'高柜',     size:'40', teu:2, tare:4.0, payload:26.3, reefer:false, oog:false},
+  {id:'20RF', label:'20RF', sub:'冷藏柜',   size:'20', teu:1, tare:3.0, payload:20.0, reefer:true,  oog:false},
+  {id:'40RF', label:'40RF', sub:'冷藏高柜', size:'40', teu:2, tare:4.8, payload:25.0, reefer:true,  oog:false},
+  {id:'20OT', label:'20OT', sub:'开顶柜',   size:'20', teu:1, tare:2.6, payload:21.0, reefer:false, oog:true},
+  {id:'40FR', label:'40FR', sub:'框架柜',   size:'40', teu:2, tare:5.2, payload:26.0, reefer:false, oog:true}
+];
+const ZONES = {
+  A:{name:'A 都市',   range:'≤25 km',    pct:0},
+  B:{name:'B 近郊',   range:'25–60 km',  pct:0},
+  C:{name:'C 区域',   range:'60–120 km', pct:0.04},
+  D:{name:'D 偏远',   range:'120–220 km',pct:0.10},
+  E:{name:'E 极偏远', range:'>220 km',   pct:0.18},
+  I:{name:'岛屿',     range:'不可直达',  pct:0}
+};
+const CBD_PC = new Set(['7000','7001','7002','7003','7250','7310','7320']);
+const TRICKY_40 = new Set(['7466','7467','7468','7469','7470','7255','7256','7116','7117','7180','7181','7182','7183','7184','7185','7186','7187','7030','7304','7306','7262','7190','7215','7216']);
+const DEFAULT_ISLAND = {
+  '7256': {name:'King Island 国王岛', ship:'Bass Island Line（Devonport ↔ Grassy）', sea:{'20':1952,'40':3904}, local:{'20':350,'40':520}, note:'40ft 标准柜不承运，按 2×20ft 估算；岛内由侧卸车派送。'},
+  '7255': {name:'Flinders Island 弗林德斯岛', ship:'岛内海运（Bridport / Launceston ↔ Lady Barron）', sea:{'20':1650,'40':3300}, local:{'20':380,'40':560}, note:'40ft 通常需拆柜或按 2×20ft 估算；岛内派送按侧卸计。'}
+};
+
+/* ============================ 默认费率 ============================ */
+const DEFAULT_RATES = {
+  wharfage: {direct:106.45, bass:67.47},              // $/TEU, TasPorts FY2027
+  terminal: {'20':280, '40':420},                      // 码头操作/吊装（市场假设）
+  bass:     {'20':1150, '40':1600},                    // 墨尔本↔塔州海运费（市场假设）
+  bassReefer: {'20':250, '40':350},                    // 冷藏柜海运费加价（市场假设）
+  reeferPlugPerDay: 73.07,                             // TasPorts 官方
+  quarantineFee: 362,                                  // TasPorts 官方
+  weighbridge: 13.30,                                  // TasPorts 官方
+  portStorage: {'20':35, '40':55},                     // 港口超期仓储/天（市场假设）
+  cartage: {
+    includedKm: 25,
+    base:   {'20':380, '40':480},                      // 含首段（市场假设）
+    perkm:  {'20':2.10, '40':2.60},                    // 超里程单价（市场假设）
+    minCharge: {'20':380, '40':480}
+  },
+  zonePct: {C:0.04, D:0.10, E:0.18},                   // 区域附加（市场假设）
+  access: {
+    sideloader: {'20':190, '40':290},
+    crane:      {'20':650, '40':850},
+    transload:  {'20':450, '40':650},
+    unsealed: 150,
+    cbd: 120,
+    satPct: 0.12, sunPct: 0.25, nightPct: 0.20
+  },
+  wait: {freeHours:1, rate:{'20':85,'40':110}},
+  detention: {freeDays:7, rate:{'20':70,'40':100}},
+  dehire: {'20':180, '40':250},
+  overweight: {limit:{'20':21.5,'40':26.5}, perT:120},
+  fuelPct: 0.30,                                       // 市区燃油附加（2026-10 市场假设，参照澳洲车队实收区间）
+  fuelRuralPct: 0.40,                                  // 偏远燃油附加（>60km）
+  gstPct: 0.10,
+  island: DEFAULT_ISLAND
+};
+function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+function mergeRates(base, patch){
+  const out = deepClone(base);
+  (function walk(t, s){
+    for (const k in s){
+      if (s[k] !== null && typeof s[k] === 'object' && !Array.isArray(s[k])){
+        if (t[k] !== null && typeof t[k] === 'object') walk(t[k], s[k]);
+      } else if (k in t && typeof t[k] === typeof s[k]) t[k] = s[k];
+    }
+  })(out, patch || {});
+  return out;
+}
+let RATES = deepClone(DEFAULT_RATES);
+try{
+  const saved = localStorage.getItem('tasFclRates_v1');
+  if (saved) RATES = mergeRates(DEFAULT_RATES, JSON.parse(saved));
+}catch(e){}
+
+/* ============================ 状态 ============================ */
+  const state = {
+  postcode:'7000', locality:'', kmOverride:'', typeId:'40GP', gross:22,
+  route:'direct', port:'auto', unload:'dock', semi:'yes', site:'warehouse',
+  surface:'sealed', period:'day', waitHours:0, occupyDays:7, portStorageDays:0,
+  fuelPct:null, marginPct:0, dehire:true, fum:false, weigh:false
+};
+
+/* ============================ 工具函数 ============================ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function money(n){ if (n == null || isNaN(n)) return '—'; return '$' + Number(n).toLocaleString('en-AU',{minimumFractionDigits:2, maximumFractionDigits:2}); }
+function money0(n){ if (n == null || isNaN(n)) return '—'; return '$' + Number(n).toLocaleString('en-AU',{maximumFractionDigits:0}); }
+function pct(n){ return (n*100).toFixed(0) + '%'; }
+function num(n){ return Number(n).toLocaleString('en-AU'); }
+function findPC(pc){
+  if (!pc) return null;
+  pc = String(pc).trim();
+  const hit = PC_DATA.find(r => r[0] === pc);
+  if (hit) return {rec:hit, exact:true};
+  return null;
+}
+function nearestRec(pc){
+  const n = parseInt(pc,10);
+  if (isNaN(n)) return null;
+  let best = null, bestD = 1e9;
+  for (const r of PC_DATA){
+    const d = Math.abs(parseInt(r[0],10) - n);
+    if (d < bestD){ bestD = d; best = r; }
+  }
+  return best ? {rec:best, exact:false, diff:bestD} : null;
+}
+function geoFromRec(rec){
+  return {
+    pc: rec[0], town: rec[1],
+    km: {hobart: rec[2], bellbay: rec[3], devonport: rec[4], burnie: rec[5]},
+    island: rec[6] === 1
+  };
+}
+function zoneOf(km, island){
+  if (island) return 'I';
+  if (km == null) return 'I';
+  if (km <= 25) return 'A';
+  if (km <= 60) return 'B';
+  if (km <= 120) return 'C';
+  if (km <= 220) return 'D';
+  return 'E';
+}
+function zoneInfo(z){
+  const base = ZONES[z];
+  const pctv = z === 'C' ? RATES.zonePct.C : z === 'D' ? RATES.zonePct.D : z === 'E' ? RATES.zonePct.E : 0;
+  return {name: base.name, range: base.range, pct: pctv};
+}
+function typeOf(id){ return TYPES.find(t => t.id === id) || TYPES[1]; }
+function routePorts(route){ return route === 'direct' ? ['hobart','bellbay'] : ['devonport','burnie']; }
+function nearestPort(route, geo){
+  const list = routePorts(route).filter(p => geo.km[p] != null);
+  if (!list.length) return null;
+  list.sort((a,b) => geo.km[a] - geo.km[b]);
+  return list[0];
+}
+function isIslandPC(pc){ return pc === '7255' || pc === '7256'; }
+
+/* ============================ 核心计算 ============================ */
+function computeQuote(s, rates){
+  const type = typeOf(s.typeId);
+  const size = type.size;
+  const teu = type.teu;
+  const is40 = size === '40';
+  const recWrap = findPC(s.postcode) || nearestRec(s.postcode);
+  const geo = recWrap ? geoFromRec(recWrap.rec) : null;
+  const island = geo && geo.island;
+  const islandPort = geo && geo.pc === '7256' ? 'devonport' : 'bellbay';
+  const port = s.port === 'auto'
+    ? (island ? islandPort : (nearestPort(s.route, geo) || (s.route === 'direct' ? 'hobart' : 'devonport')))
+    : s.port;
+  let km = (s.kmOverride !== '' && s.kmOverride != null) ? parseFloat(s.kmOverride) : (geo ? geo.km[port] : null);
+  if (island) km = null;
+  const zone = zoneOf(km, island);
+  const zi = zoneInfo(zone);
+  const portInfo = PORTS[port];
+
+  /* ---------- 判定 ---------- */
+  const blocks = [], issues = [], oks = [];
+  if (!/^7\d{3}$/.test(String(s.postcode))) blocks.push({k:'非塔州邮编', d:'请输入塔州邮编（7000–7999）；当前输入将按邻近邮编估算。'});
+  if (island){
+    blocks.push({k:'岛屿地区', d: geo.pc === '7256' ? 'King Island：整柜无法经公路直达，需经 Bass Island Line 岛内海运或拆柜后派送。' : 'Flinders Island：整柜无法经公路直达，需岛内海运/拆柜后派送。'});
+  }
+  if (s.semi === 'no'){
+    issues.push({k:'半挂无法进场', d:'需在最近堆场转运至小型货车（已计转运附加费）；如现场道路过窄，可能只能拆柜派送。'});
+  } else if (s.semi === 'uncertain'){
+    issues.push({k:'进场条件待勘察', d:'报价按标准半挂计；若确认无法进场，需追加转运费（' + money(rates.access.transload[size]) + '）。'});
+  } else {
+    oks.push('半挂可进场');
+  }
+  if (s.unload === 'none'){
+    issues.push({k:'需侧卸（side loader）', d:'现场无月台/叉车，使用自卸侧卸车，已计附加费 ' + money(rates.access.sideloader[size]) + '。'});
+  } else if (s.unload === 'crane'){
+    issues.push({k:'需吊车卸柜', d:'按吊车台班另议，基准价仅含参考吊装费 ' + money(rates.access.crane[size]) + '。'});
+  } else if (s.unload === 'transload'){
+    issues.push({k:'需转运小货车', d:'半挂不能进场，需在堆场换装小型货车，已计转运费 ' + money(rates.access.transload[size]) + '。'});
+  } else {
+    oks.push('现场可自卸');
+  }
+  if (km != null && km > 220 && is40){
+    issues.push({k:'40ft 远端线路', d:'单程 ' + km + ' km，偏远道路对 40ft 半挂转弯/会车受限，建议确认或改用 20ft/转运。'});
+  }
+  if (!island && is40 && geo && TRICKY_40.has(geo.pc)){
+    issues.push({k:'40ft 支线受限', d:'该区域部分道路弯多路窄，40ft 半挂通行需车队确认；必要时改用 20ft 或转运。'});
+  }
+  if (km != null && km > 120){
+    issues.push({k:'偏远区域附加', d:'单程 ' + km + ' km（' + zi.name + '），已计 ' + pct(zi.pct) + ' 区域附加，司机工时与空箱回程成本较高。'});
+  }
+  if (s.site === 'cbd' || (CBD_PC.has(geo ? geo.pc : '') && s.site !== 'warehouse' && s.site !== 'farm')){
+    issues.push({k:'CBD / 商业区限制', d:'需临时停车/占道许可，通常仅限非高峰时段，等待与罚款风险高；已计 CBD 附加 ' + money(rates.access.cbd) + '。'});
+  }
+  if (s.surface === 'unsealed_short'){
+    issues.push({k:'未铺装路段（短）', d:'已计未铺装道路附加（部分）；雨天可能无法进场。'});
+  } else if (s.surface === 'unsealed_long'){
+    issues.push({k:'未铺装路段（长）', d:'40ft 重柜不建议进入；已计未铺装附加 ' + money(rates.access.unsealed) + '，雨天需改期或转运。'});
+  }
+  if (s.period === 'sat') issues.push({k:'周六派送', d:'已计周六时段附加 ' + pct(rates.access.satPct) + '（基于派送段小计）。'});
+  if (s.period === 'sun') issues.push({k:'周日/公共假日派送', d:'已计时段附加 ' + pct(rates.access.sunPct) + '，需提前与车队确认。'});
+  if (s.period === 'night') issues.push({k:'夜间/非工作时间', d:'已计时段附加 ' + pct(rates.access.nightPct) + '。'});
+  if (type.reefer) issues.push({k:'冷藏柜', d:'需确认卸货后供电/发电机；港口插电费 ' + money(rates.reeferPlugPerDay) + '/天已计，海运费含冷藏加价。'});
+  if (type.oog) issues.push({k:'开顶/框架超尺寸', d:'超尺寸柜需特殊许可与吊装安排，费用多为 POA，本价格仅供参考。'});
+  if (type.reefer && s.period !== 'day') issues.push({k:'冷藏柜温控衔接', d:'非工作时间派送需确保冷机不断电，建议预约上午时段。'});
+  const owLimit = rates.overweight.limit[size];
+  const overweightT = Math.max(0, Number(s.gross) - owLimit);
+  if (overweightT > 0){
+    issues.push({k:'超重', d:'毛重 ' + s.gross + 't 超过常规公路限重 ' + owLimit + 't，需超重许可/减载，已计超重附加 ' + money(overweightT * rates.overweight.perT) + '。'});
+  } else {
+    oks.push('毛重 ' + s.gross + 't 在常规限重内');
+  }
+  if (type.payload < Number(s.gross) - type.tare){
+    issues.push({k:'超柜体载重', d:'该柜型净载重约 ' + type.payload + 't（含柜重毛重上限 ' + (type.payload + type.tare).toFixed(1) + 't），请确认可装柜。'});
+  }
+  if (s.waitHours > rates.wait.freeHours){
+    issues.push({k:'等待/压车', d:'超过 ' + rates.wait.freeHours + ' 小时免费等待，已按 ' + money(rates.wait.rate[size]) + '/小时计 ' + Math.max(0, s.waitHours - rates.wait.freeHours) + ' 小时。'});
+  }
+  if (s.occupyDays > rates.detention.freeDays){
+    issues.push({k:'滞箱（detention）', d:'占用 ' + s.occupyDays + ' 天，超过 ' + rates.detention.freeDays + ' 天免费期，按 ' + money(rates.detention.rate[size]) + '/天计 ' + (s.occupyDays - rates.detention.freeDays) + ' 天。'});
+  }
+  if (s.portStorageDays > 0){
+    issues.push({k:'港口超期仓储', d:'已计 ' + s.portStorageDays + ' 天 × ' + money(rates.portStorage[size]) + '/天。'});
+  }
+  if (s.fum) issues.push({k:'检疫熏蒸/清洗', d:'已计 TasPorts 官方熏蒸/清洗费 ' + money(rates.quarantineFee) + '（不含检验官/代理费用）。'});
+
+  const verdict = blocks.length ? 'red' : issues.length ? 'amber' : 'green';
+
+  /* ---------- 岛屿：整柜不可公路直达，按岛内海运替代方案计价 ---------- */
+  if (island){
+    const isl = rates.island[geo.pc] || DEFAULT_ISLAND['7256'];
+    const ship = isl.sea[size] || 0;
+    const local = isl.local[size] || 0;
+    const rows = [];
+    const add = (group, label, detail, amount, factor) => {
+      const f = factor || [1,1];
+      rows.push({group, label, detail, amount: amount || 0, low: (amount||0) * f[0], high: (amount||0) * f[1]});
+    };
+    add('A 岛内海运与港口段', '岛内海运 / 滚装', isl.ship + ' · ' + size + 'ft 基准' + (is40 ? '（40ft 多按 2×20ft 估算）' : ''), ship, [0.9, 1.15]);
+    add('B 岛内派送', '岛内派送（侧卸 / 小型车）', '港口→客户地址（岛内短驳）', local, [0.9, 1.15]);
+    const subtotal = ship + local;
+    const lowSubtotal = rows.reduce((a,b) => a + b.low, 0);
+    const highSubtotal = rows.reduce((a,b) => a + b.high, 0);
+    const gst = subtotal * rates.gstPct, gstLow = lowSubtotal * rates.gstPct, gstHigh = highSubtotal * rates.gstPct;
+    return {
+      geo, recExact: recWrap ? recWrap.exact : false, island, port, portInfo, km:null, zone, zi,
+      type, size, teu, quoteType: type, blocks, issues, oks, verdict, rows,
+      seaPortSum: ship, cartageBase: 0, mileage: 0, zoneFee: 0, access: local, waitFee: 0,
+      fuel: 0, fuelRate: 0, dehireFee: 0, detentionFee: 0, owFee: 0, plug: 0,
+      wharfage: 0, terminal: 0, bass: 0,
+      subtotal, gst, total: subtotal + gst,
+      lowSubtotal, highSubtotal, gstLow, gstHigh,
+      totalLow: lowSubtotal + gstLow, totalHigh: highSubtotal + gstHigh,
+      overweightT: 0, cbdAuto: false, islandScheme: isl,
+      costSubtotal: subtotal, margin: 0, marginPct: 0, autoFuel: 0
+    };
+  }
+
+  /* ---------- 费用 ---------- */
+  const rows = [];
+  const add = (group, label, detail, amount, factor) => {
+    const f = factor || [1,1];
+    rows.push({group, label, detail, amount: amount || 0, low: (amount||0) * f[0], high: (amount||0) * f[1]});
+  };
+
+  /* A 海运与港口 */
+  const wharfRate = s.route === 'direct' ? rates.wharfage.direct : rates.wharfage.bass;
+  const wharfage = wharfRate * teu;
+  const terminal = rates.terminal[size];
+  add('A 海运与港口段', '塔州码头操作/吊装费', '按柜型：' + size + 'ft · 市场假设', terminal, [0.9, 1.15]);
+  add('A 海运与港口段', 'TasPorts Wharfage', '发票费率 ' + money(wharfRate) + '/TEU × ' + teu + ' TEU（官方 FY2027）', wharfage, [1,1]);
+  let bass = 0;
+  if (s.route === 'bass'){
+    bass = rates.bass[size] + (type.reefer ? rates.bassReefer[size] : 0);
+    add('A 海运与港口段', 'Bass Strait 海运费', '墨尔本↔' + PORTS[port].cn + '，' + size + 'ft' + (type.reefer ? '（含冷藏加价）' : '') + ' · 市场假设', bass, [0.85, 1.2]);
+  }
+  let plug = 0;
+  if (type.reefer){
+    plug = rates.reeferPlugPerDay * 2;
+    add('A 海运与港口段', '冷藏柜港口插电', money(rates.reeferPlugPerDay) + '/天 × 2 天（官方费率）', plug, [1,1]);
+  }
+  if (s.fum) add('A 海运与港口段', '检疫熏蒸 / 清洗', 'TasPorts 官方熏蒸 362 起（不含代理/检验费用）', rates.quarantineFee, [1,1.3]);
+  if (s.weigh) add('A 海运与港口段', '地磅称重', 'TasPorts 官方 13.30/次（可能多次）', rates.weighbridge, [1,1]);
+  if (s.portStorageDays > 0) add('A 海运与港口段', '港口超期仓储', s.portStorageDays + ' 天 × ' + money(rates.portStorage[size]) + '/天 · 市场假设', s.portStorageDays * rates.portStorage[size], [1,1]);
+
+  /* B 派送段 */
+  const cartageBase = Math.max(rates.cartage.minCharge[size], rates.cartage.base[size]);
+  add('B 派送段（Wharf Cartage）', '基础派送费（含首 ' + rates.cartage.includedKm + ' km）', '按柜型：' + size + 'ft · 市场假设', cartageBase, [0.9, 1.12]);
+  const extraKm = km != null ? Math.max(0, km - rates.cartage.includedKm) : 0;
+  const mileage = extraKm * rates.cartage.perkm[size];
+  add('B 派送段（Wharf Cartage）', '超里程费', 'max(0, ' + (km == null ? '—' : km + ' km') + ' − ' + rates.cartage.includedKm + ' km) × ' + money(rates.cartage.perkm[size]) + '/km', mileage, [0.9, 1.12]);
+  let zoneFee = 0;
+  if (zi.pct > 0 && km != null){
+    zoneFee = (cartageBase + mileage) * zi.pct;
+    add('B 派送段（Wharf Cartage）', '区域附加（' + zi.name + '）', '(' + money(cartageBase) + ' + ' + money(mileage) + ') × ' + pct(zi.pct), zoneFee, [0.9, 1.12]);
+  }
+  let access = 0;
+  const accessParts = [];
+  if (s.unload === 'none'){ access += rates.access.sideloader[size]; accessParts.push('侧卸 ' + money(rates.access.sideloader[size])); }
+  if (s.unload === 'crane'){ access += rates.access.crane[size]; accessParts.push('吊车 ' + money(rates.access.crane[size])); }
+  if (s.unload === 'transload'){ access += rates.access.transload[size]; accessParts.push('转运 ' + money(rates.access.transload[size])); }
+  if (s.semi === 'no' && s.unload !== 'transload'){ access += rates.access.transload[size]; accessParts.push('半挂无法进场转运 ' + money(rates.access.transload[size])); }
+  if (s.surface === 'unsealed_short'){ access += rates.access.unsealed * 0.6; accessParts.push('未铺装路 ' + money(rates.access.unsealed * 0.6)); }
+  if (s.surface === 'unsealed_long'){ access += rates.access.unsealed; accessParts.push('未铺装路 ' + money(rates.access.unsealed)); }
+  const cbdAuto = s.site === 'cbd' || (CBD_PC.has(geo ? geo.pc : '') && s.site !== 'warehouse' && s.site !== 'farm');
+  if (cbdAuto){ access += rates.access.cbd; accessParts.push('CBD 附加 ' + money(rates.access.cbd)); }
+  const timeBase = cartageBase + mileage + zoneFee;
+  if (s.period === 'sat'){ const t = timeBase * rates.access.satPct; access += t; accessParts.push('周六附加 ' + pct(rates.access.satPct)); }
+  if (s.period === 'sun'){ const t = timeBase * rates.access.sunPct; access += t; accessParts.push('周日/假日附加 ' + pct(rates.access.sunPct)); }
+  if (s.period === 'night'){ const t = timeBase * rates.access.nightPct; access += t; accessParts.push('夜间附加 ' + pct(rates.access.nightPct)); }
+  if (access > 0) add('B 派送段（Wharf Cartage）', '现场作业附加', accessParts.join('；'), access, [0.9, 1.1]);
+
+  /* C 空箱与时间费 */
+  const waitFee = Math.max(0, Number(s.waitHours) - rates.wait.freeHours) * rates.wait.rate[size];
+  if (waitFee > 0) add('C 空箱与时间费', '等待 / 压车费', 'max(0, ' + s.waitHours + ' − ' + rates.wait.freeHours + 'h) × ' + money(rates.wait.rate[size]) + '/h', waitFee, [0.9, 1.15]);
+  const dehireFee = s.dehire ? rates.dehire[size] : 0;
+  if (dehireFee > 0) add('C 空箱与时间费', '空箱返还（dehire）', '空箱拖回船司指定堆场 · 市场假设', dehireFee, [0.9, 1.1]);
+  const detentionDays = Math.max(0, Number(s.occupyDays) - rates.detention.freeDays);
+  const detentionFee = detentionDays * rates.detention.rate[size];
+  if (detentionFee > 0) add('C 空箱与时间费', '滞箱费（detention）', detentionDays + ' 天 × ' + money(rates.detention.rate[size]) + '/天 · 市场假设（船司费率差异大）', detentionFee, [0.85, 1.2]);
+  const owFee = overweightT * rates.overweight.perT;
+  if (owFee > 0) add('C 空箱与时间费', '超重附加', overweightT.toFixed(1) + 't × ' + money(rates.overweight.perT) + '/t（许可/减载风险）', owFee, [1, 1.3]);
+
+  /* 小计（不含燃油/GST） */
+  const seaPortSum = rows.filter(r => r.group.startsWith('A')).reduce((a,b) => a + b.amount, 0);
+  const cartageSumNoFuel = cartageBase + mileage + zoneFee + access + waitFee;
+  const otherSum = dehireFee + detentionFee + owFee;
+  const autoFuel = (km != null && km > 60) ? rates.fuelRuralPct : rates.fuelPct;
+  const fuelRate = (s.fuelPct == null || s.fuelPct === '') ? autoFuel : Number(s.fuelPct) / 100;
+  const fuel = cartageSumNoFuel * fuelRate;
+  if (fuel > 0) add('D 燃油附加', '燃油附加费（FSC）· ' + (km != null && km > 60 ? '偏远档' : '市区档'), '(' + money(cartageBase) + ' + ' + money(mileage) + ' + ' + money(zoneFee) + ' + ' + money(access) + ' + ' + money(waitFee) + ') × ' + (fuelRate*100).toFixed(1) + '%', fuel, [0.9, 1.15]);
+
+  // 成本小计（不含加价）
+  const costSubtotal = seaPortSum + cartageSumNoFuel + otherSum + fuel;
+  const costLow = rows.reduce((a,b) => a + b.low, 0);
+  const costHigh = rows.reduce((a,b) => a + b.high, 0);
+  // 报价加价 / 毛利（可选）
+  const marginPct = Math.max(0, Number(s.marginPct || 0)) / 100;
+  const margin = costSubtotal * marginPct;
+  if (marginPct > 0){
+    rows.push({group:'E 加价与毛利', label:'报价加价 / 毛利', detail:'成本小计 ' + money(costSubtotal) + ' × ' + (marginPct*100).toFixed(1) + '%', amount:margin, low:costLow * marginPct, high:costHigh * marginPct});
+  }
+  const subtotal = rows.reduce((a,b) => a + b.amount, 0);
+  const lowSubtotal = rows.reduce((a,b) => a + b.low, 0);
+  const highSubtotal = rows.reduce((a,b) => a + b.high, 0);
+  const gst = subtotal * rates.gstPct, gstLow = lowSubtotal * rates.gstPct, gstHigh = highSubtotal * rates.gstPct;
+  const total = subtotal + gst, totalLow = lowSubtotal + gstLow, totalHigh = highSubtotal + gstHigh;
+
+  return {
+    geo, recExact: recWrap ? recWrap.exact : false, island, port, portInfo, km, zone, zi,
+    type, size, teu, quoteType: type,
+    blocks, issues, oks, verdict,
+    rows, seaPortSum, cartageBase, mileage, zoneFee, access, waitFee, fuel, fuelRate, autoFuel,
+    dehireFee, detentionFee, owFee, plug, wharfage, terminal, bass,
+    costSubtotal, margin, marginPct,
+    subtotal, gst, total, lowSubtotal, highSubtotal, gstLow, gstHigh, totalLow, totalHigh,
+    overweightT, cbdAuto
+  };
+}
+
+/* ============================ 渲染：报价页 ============================ */
+function render(){
+  const q = computeQuote(state, RATES);
+  renderVerdict(q);
+  renderRoute(q);
+  renderCost(q);
+  renderTotals(q);
+  renderAlt(q);
+  renderNotes(q);
+  const fsEl = $('f-fuelshown');
+  if (fsEl) fsEl.value = q.fuel > 0 ? (q.fuelRate*100).toFixed(0) + '%（' + (q.km != null && q.km > 60 ? '偏远' : '市区') + '档' + (state.fuelPct == null ? '·自动' : '·手动') + '）' : '—';
+  window.__lastQuote = q;
+  try{ localStorage.setItem('tasFclLastState', JSON.stringify(state)); }catch(e){}
+}
+
+function renderVerdict(q){
+  const v = $('verdict');
+  v.className = 'verdict ' + q.verdict;
+  const icon = v.querySelector('.icon');
+  const title = $('verdict-title'), sub = $('verdict-sub');
+  if (q.verdict === 'green'){
+    icon.textContent = '✅';
+    title.textContent = '可以整柜直达派送';
+    sub.textContent = (q.geo ? q.geo.town : '目的地') + ' · 到港 ' + q.portInfo.cn + ' · 单程 ' + q.km + ' km · 常规柜型可送达';
+  } else if (q.verdict === 'amber'){
+    icon.textContent = '⚠️';
+    title.textContent = '可派送，但需附加条件';
+    sub.textContent = (q.geo ? q.geo.town : '目的地') + ' · 到港 ' + q.portInfo.cn + ' · 单程 ' + (q.km == null ? '—' : q.km + ' km') + ' · 请逐项确认下列条件';
+  } else {
+    const nonTas = q.blocks.some(b => b.k === '非塔州邮编');
+    icon.textContent = '⛔';
+    title.textContent = nonTas ? '请输入塔州邮编（7000–7999）' : '不能整柜直达派送';
+    sub.textContent = nonTas
+      ? '当前邮编不在塔州范围；以下结果仅为邻近塔州邮编的参考估算，请重新输入。'
+      : q.island
+        ? '岛屿地区：整柜无法经公路直达，下方按「岛内海运 + 岛内派送」替代方案估算 ' + money(q.total) + '（含 GST）'
+        : '需采用拆柜 / 岛内海运等替代方案（见下方替代方案估算）';
+  }
+  const chips = $('verdict-chips');
+  let html = '';
+  for (const b of q.blocks) html += '<span class="chip bad">⛔ ' + esc(b.k) + '</span>';
+  for (const i of q.issues) html += '<span class="chip warn">⚠ ' + esc(i.k) + '</span>';
+  for (const o of q.oks) html += '<span class="chip ok">✓ ' + esc(o) + '</span>';
+  chips.innerHTML = html || '<span class="chip ok">✓ 常规派送</span>';
+  const hint = $('route-hint');
+  hint.textContent = q.recExact ? '' : '（邮编未收录，按邻近邮编 ' + (q.geo ? q.geo.pc : '') + ' 估算）';
+}
+function renderRoute(q){
+  $('r-port').innerHTML = esc(q.portInfo.cn) + ' <small>' + esc(q.portInfo.en) + '</small>';
+  $('r-dest').innerHTML = esc(q.geo ? q.geo.town : '—') + ' <small>' + esc(q.geo ? q.geo.pc : '') + '</small>';
+  $('r-km').innerHTML = q.island ? '岛屿 · 无公路' : (q.km + ' <small>km · 约 ' + driveTime(q.km) + '</small>');
+  const zi = q.zi;
+  const zcls = q.zone === 'I' ? 'zI' : 'z' + q.zone;
+  $('r-zone').innerHTML = '<span class="zone-pill ' + zcls + '">' + esc(zi.name) + '</span> <small>' + esc(zi.range) + '</small>';
+}
+function driveTime(km){
+  if (km == null) return '—';
+  const h = km / 75; // 平均 75km/h 公路
+  const hh = Math.floor(h), mm = Math.round((h - hh) * 60);
+  return hh > 0 ? hh + ' 小时 ' + (mm ? mm + ' 分' : '') : mm + ' 分钟';
+}
+function renderCost(q){
+  const body = $('cost-body');
+  let html = '', lastGroup = '';
+  for (const r of q.rows){
+    if (r.group !== lastGroup){ html += '<tr class="grp"><td colspan="4">' + esc(r.group) + '</td></tr>'; lastGroup = r.group; }
+    const range = (r.low === r.high || (r.low === 0 && r.high === 0)) ? '—' : money(r.low) + ' ~ ' + money(r.high);
+    html += '<tr><td>' + esc(r.label) + '</td><td><span class="det">' + esc(r.detail) + '</span></td><td class="amt">' + money(r.amount) + '</td><td class="amt">' + range + '</td></tr>';
+  }
+  html += '<tr class="sum"><td colspan="2">不含 GST 小计</td><td class="amt">' + money(q.subtotal) + '</td><td class="amt">' + money(q.lowSubtotal) + ' ~ ' + money(q.highSubtotal) + '</td></tr>';
+  html += '<tr class="gst"><td colspan="2">GST ' + pct(RATES.gstPct) + '</td><td class="amt">' + money(q.gst) + '</td><td class="amt">' + money(q.gstLow) + ' ~ ' + money(q.gstHigh) + '</td></tr>';
+  html += '<tr class="tot"><td colspan="2">合计（含 GST）</td><td class="amt">' + money(q.total) + '</td><td class="amt">' + money(q.totalLow) + ' ~ ' + money(q.totalHigh) + '</td></tr>';
+  body.innerHTML = html;
+}
+function renderTotals(q){
+  $('t-label').textContent = q.island ? '替代方案合计（含 10% GST）' : '门到门合计（含 10% GST）';
+  $('t-total').innerHTML = money(q.total) + ' <small>AUD</small>';
+  $('t-range').innerHTML = '参考区间：<b>' + money(q.totalLow) + ' ~ ' + money(q.totalHigh) + '</b>（不含特殊许可/吊装台班等 POA 项）';
+  $('t-exgst').innerHTML = money(q.subtotal);
+  $('t-gst').innerHTML = '含 GST ' + money(q.gst) + ' · 柜型 ' + q.type.id + ' · ' + (q.island ? '岛屿海运方案' : q.km + ' km');
+}
+function renderAlt(q){
+  const box = $('alt-box');
+  if (!q.island){ box.innerHTML = ''; return; }
+  const isl = q.islandScheme || RATES.island[q.geo.pc] || DEFAULT_ISLAND['7256'];
+  box.innerHTML =
+    '<div class="alt"><h4>替代方案说明：' + esc(isl.name) + '</h4>' +
+    '<div class="kv">' +
+      '<div class="k">岛内承运</div><div class="v">' + esc(isl.ship) + '</div>' +
+      '<div class="k">柜型安排</div><div class="v">' + esc(isl.note) + '</div>' +
+      '<div class="k">估算合计</div><div class="v" style="font-size:16px;color:#9a3412">' + money(q.total) + '（含 GST）</div>' +
+    '</div>' +
+    '<div class="tip" style="margin-top:6px">岛屿方案为估算：King Island 参考 Bass Island Line FY2027 公开运价（20ft Devonport↔King Island 2,147 含 GST），本表按 ex-GST 拆算；Flinders Island 为市场假设。实际需向承运人确认舱位、柜型与岛内派送条件。</div></div>';
+}
+function renderNotes(q){
+  const notes = [];
+  notes.push('<b>报价口径：</b>不含 GST 的各项为 ex-GST；合计含 ' + pct(RATES.gstPct) + ' GST。金额单位：澳元 AUD。' +
+    (state.route === 'direct' ? ' 当前为「国际直航」路径：仅计算塔州港口费 + 本地派送，国际海运费不含（通常由主单/货代收取）。' : ' 当前为「墨尔本中转」路径：已含 Bass Strait 海运费估算。'));
+  if (q.island) notes.push('<b>岛屿方案：</b>整柜无法公路直达；本报价为「岛内海运 + 岛内派送」估算，不含拆柜/装箱、岛内仓储与超期费用，需向承运人确认舱位与柜型。');
+  notes.push('<b>不包含：</b>国际海运费/起运港费用、清关与报关代理费、DAFF 生物安全查验/检疫处理（勾选熏蒸除外）、码头滞港费、船司滞箱（如未填天数）、保险、关税/税、特殊许可（超重/超尺寸）、吊车台班超出参考值部分、等待超时、二次派送。');
+  const tips = [];
+  if (q.type.oog) tips.push('超尺寸柜（开顶/框架）需单独询价（POA）。');
+  if (q.surface === 'unsealed_long' || q.surface === 'unsealed_short') tips.push('未铺装道路雨天可能无法进场，建议提前与司机确认。');
+  if (q.km != null && q.km > 220) tips.push('极偏远线路建议同时取得回程空箱安排确认，避免滞箱费。');
+  if (q.type.reefer) tips.push('冷藏柜请确认卸货后可持续供电（市电/发电机），否则需安排冷库暂存。');
+  if (q.overweightT > 0) tips.push('超重柜需申请超重许可或减载，实际费用以许可与车队确认为准。');
+  if (q.cbdAuto) tips.push('CBD 区域需提前申请临时停车/占道许可。');
+  if (q.marginPct > 0) tips.push('已按成本小计 × ' + (q.marginPct*100).toFixed(1) + '% 计入报价加价/毛利；如需纯成本口径请把加价率设为 0。');
+  if (tips.length) notes.push('<b>提示：</b>' + tips.join(' '));
+  notes.push('<b>有效期建议：</b>7 天；燃油附加与海运费随市场波动。');
+  $('notes-box').innerHTML = notes.map(n => '<div style="margin:3px 0">' + n + '</div>').join('');
+}
+
+/* ============================ 打印 / 导出 ============================ */
+function buildQuoteHTML(){
+  const q = computeQuote(state, RATES);
+  const rowHtml = q.rows.map(r =>
+    '<tr><td>' + esc(r.label) + '<br><span style="color:#666;font-size:10px">' + esc(r.detail) + '</span></td><td class="amt">' + money(r.amount) + '</td></tr>'
+  ).join('');
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('zh-CN');
+  const quoteNo = 'TAS-' + dateStr.replace(/[^0-9]/g,'') + '-' + String(Math.floor(Math.random()*900+100));
+  const routeCn = state.route === 'direct' ? '国际直航塔州港' : '墨尔本中转 · Bass Strait 滚装';
+  return '<div class="q-head"><div><h1>塔斯马尼亚 FCL 整柜派送报价单</h1><div>Tasmania FCL Container Delivery Quotation</div></div>' +
+    '<div style="text-align:right;font-size:11px">报价编号：' + quoteNo + '<br>日期：' + dateStr + '<br>有效期：7 天</div></div>' +
+    '<table><tr><th style="width:35%">项目</th><th>内容</th></tr>' +
+    '<tr><td>客户邮编 / 城镇</td><td>' + esc(q.geo ? q.geo.pc : '—') + ' / ' + esc(q.geo ? q.geo.town : '—') + '</td></tr>' +
+    '<tr><td>柜型 / 毛重</td><td>' + esc(q.type.id) + ' · ' + state.gross + ' t</td></tr>' +
+    '<tr><td>运输路径 / 到港港</td><td>' + routeCn + ' / ' + esc(q.portInfo.cn) + '（' + esc(q.portInfo.en) + '）</td></tr>' +
+    '<tr><td>港口→客户公路里程</td><td>' + (q.island ? '岛屿（无公路）' : q.km + ' km · 约 ' + driveTime(q.km)) + '</td></tr>' +
+    '<tr><td>可达性判定</td><td>' + (q.verdict === 'green' ? '可整柜直达派送' : q.verdict === 'amber' ? '可派送，需附加条件' : '不能整柜直达（需拆柜/岛内海运）') + '</td></tr></table>' +
+    '<h3 style="font-size:13px;margin:14px 0 6px">费用明细（AUD，ex-GST）</h3>' +
+    '<table>' + rowHtml + '<tr class="tot-row"><td>不含 GST 小计</td><td class="amt">' + money(q.subtotal) + '</td></tr>' +
+    '<tr><td>GST ' + pct(RATES.gstPct) + '</td><td class="amt">' + money(q.gst) + '</td></tr>' +
+    '<tr class="tot-row"><td>合计（含 GST）</td><td class="amt">' + money(q.total) + '</td></tr>' +
+    '<tr><td>参考区间（市场波动）</td><td class="amt">' + money(q.totalLow) + ' ~ ' + money(q.totalHigh) + '</td></tr></table>' +
+    '<div class="terms"><b>说明与条款：</b><br>' +
+    '1. 本报价为估算模型输出，基于公开港口费率与市场校准基准，不等同承运人正式报价；最终价格以车队/船司确认为准。<br>' +
+    '2. 不含：国际海运费、清关代理、检疫查验、关税/税、保险、超重/超尺寸许可、吊车台班超出部分、二次派送、仓储与滞箱超期。<br>' +
+    '3. 柜型与毛重、现场卸货条件、进场道路、派送时段由客户提供，如与实际不符需重新报价。<br>' +
+    '4. 冷藏柜需保证持续供电；偏远地区与岛屿（King/Flinders Island）整柜不可直达，需拆柜或岛内海运。<br>' +
+    '5. 报价有效期内如燃油/海运费大幅波动，价格可能调整。<br>' +
+    '6. 数据基准：TasPorts Schedule of Port Charges FY2027（2026-07-01 生效）；Bass Island Line Freight Tariff FY2027；市场校准费率见工具“费率设置”。</div>';
+}
+function printQuote(){
+  const el = $('quote-print');
+  el.innerHTML = buildQuoteHTML();
+  window.print();
+}
+function copySummary(){
+  const q = computeQuote(state, RATES);
+  const lines = [
+    '塔州FCL派送测算 ' + new Date().toLocaleString('zh-CN'),
+    '邮编/城镇: ' + (q.geo ? q.geo.pc + ' ' + q.geo.town : '—'),
+    '柜型/毛重: ' + q.type.id + ' / ' + state.gross + 't',
+    '路径/港口: ' + (state.route === 'direct' ? '直航' : '墨尔本中转') + ' / ' + q.portInfo.cn,
+    '里程: ' + (q.island ? '岛屿' : q.km + ' km'),
+    '判定: ' + (q.verdict === 'green' ? '可整柜直达' : q.verdict === 'amber' ? '可派送需附加条件' : '不可整柜直达'),
+    '合计(含GST): ' + money(q.total) + '  区间: ' + money(q.totalLow) + '~' + money(q.totalHigh)
+  ];
+  const txt = lines.join('\n');
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(
+    () => toast('已复制到剪贴板'),
+    () => { const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); toast('已复制'); }
+  );
+}
+function toast(msg){
+  const d = document.createElement('div');
+  d.textContent = msg;
+  d.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#0b2545;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:999;box-shadow:0 8px 24px rgba(0,0,0,.25)';
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 1800);
+}
+function exportJSON(){
+  const q = computeQuote(state, RATES);
+  const data = {generated:new Date().toISOString(), input:state, result:{postcode:q.geo?q.geo.pc:null, town:q.geo?q.geo.town:null, port:q.port, km:q.km, zone:q.zone, verdict:q.verdict, blocks:q.blocks, issues:q.issues, rows:q.rows, subtotal:q.subtotal, gst:q.gst, total:q.total, totalLow:q.totalLow, totalHigh:q.totalHigh}};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'TAS_FCL_测价_' + (q.geo ? q.geo.pc : 'x') + '_' + Date.now() + '.json';
+  a.click();
+}
+
+/* ============================ 表单绑定 ============================ */
+function syncFormFromState(){
+  $('f-pc').value = state.postcode;
+  $('f-gross').value = state.gross;
+  $('f-km').value = state.kmOverride;
+  $('f-unload').value = state.unload;
+  $('f-semi').value = state.semi;
+  $('f-site').value = state.site;
+  $('f-surface').value = state.surface;
+  $('f-period').value = state.period;
+  $('f-wait').value = state.waitHours;
+  $('f-days').value = state.occupyDays;
+  $('f-storage').value = state.portStorageDays;
+  $('f-fuel').value = state.fuelPct == null ? '' : state.fuelPct;
+  $('f-margin').value = state.marginPct || 0;
+  $('f-dehire').checked = state.dehire;
+  $('f-fum').checked = state.fum;
+  $('f-weigh').checked = state.weigh;
+  document.querySelectorAll('#route-seg button').forEach(b => b.classList.toggle('sel', b.dataset.route === state.route));
+  renderTypeButtons(); renderPortOptions(); updatePortTip();
+  updateGeoLine();
+}
+function renderTypeButtons(){
+  const wrap = $('type-list');
+  wrap.innerHTML = TYPES.map(t => '<div class="t' + (t.id === state.typeId ? ' sel' : '') + '" data-t="' + t.id + '">' + t.label + '<small>' + t.sub + '</small></div>').join('');
+  wrap.querySelectorAll('.t').forEach(el => el.onclick = () => {
+    const prevSize = typeOf(state.typeId).size;
+    state.typeId = el.dataset.t;
+    const t = typeOf(state.typeId);
+    if (typeOf(state.typeId).size !== prevSize || state.gross > t.payload){
+      state.gross = Math.min(state.gross, t.payload);
+      state.gross = Math.round(state.gross * 10) / 10;
+    }
+    $('f-gross').value = state.gross;
+    renderTypeButtons(); updateTypeTip(); render();
+  });
+  updateTypeTip();
+}
+function updateTypeTip(){
+  const t = typeOf(state.typeId);
+  $('type-tip').textContent = t.label + '：柜重 ' + t.tare + 't · 净载重约 ' + t.payload + 't · 公路常规毛重上限 ' + RATES.overweight.limit[t.size] + 't'
+    + (t.reefer ? ' · 冷藏柜（需插电/供电）' : '') + (t.oog ? ' · 超尺寸柜（POA）' : '');
+}
+function renderPortOptions(){
+  const geo = currentGeo();
+  const sel = $('f-port');
+  const opts = [];
+  opts.push('<option value="auto">自动（推荐：距客户最近）</option>');
+  for (const id of ['hobart','bellbay','devonport','burnie']){
+    const p = PORTS[id];
+    let extra = '';
+    if (geo && geo.km[id] != null) extra = ' · ' + geo.km[id] + ' km';
+    opts.push('<option value="' + id + '">' + p.cn + ' ' + p.en + extra + '</option>');
+  }
+  sel.innerHTML = opts.join('');
+  sel.value = state.port;
+}
+function updatePortTip(){
+  const geo = currentGeo();
+  if (!geo){ $('port-tip').textContent = '自动 = 选择该路径下距客户最近的港口。'; return; }
+  const cands = routePorts(state.route);
+  const list = cands.filter(p => geo.km[p] != null).map(p => PORTS[p].cn + ' ' + geo.km[p] + 'km').join('；');
+  $('port-tip').textContent = '自动 = 该路径下最近港口（' + list + '）。' + (state.route === 'direct' ? '直航一般挂靠 Hobart / Bell Bay。' : 'Bass Strait 一般经 Burnie / Devonport。');
+}
+function currentGeo(){
+  const r = findPC(state.postcode) || nearestRec(state.postcode);
+  return r ? geoFromRec(r.rec) : null;
+}
+function updateGeoLine(){
+  const r = findPC(state.postcode);
+  const g = currentGeo();
+  const el = $('geo-line');
+  if (!g){ el.classList.remove('show'); return; }
+  el.classList.add('show');
+  const isl = g.island;
+  const towns = r ? r.rec[1] : g.town;
+  let kmHtml = '';
+  if (!isl){
+    kmHtml = '<div class="km-mini">' +
+      ['hobart','bellbay','devonport','burnie'].map(id => '<div>' + PORTS[id].cn + '<b>' + (g.km[id] == null ? '—' : g.km[id] + ' km') + '</b></div>').join('') + '</div>';
+  }
+  el.innerHTML = '📍 <b>' + esc(g.pc + ' ' + towns) + '</b> · ' + (isl ? '<span style="color:#b91c1c;font-weight:600">岛屿地区（无公路直达）</span>' : '区域 ' + esc(zoneInfo(zoneOf(Math.min.apply(null, Object.values(g.km).filter(v => v != null)), false)).name)) + kmHtml;
+  if (!/^7\d{3}$/.test(String(state.postcode))) el.innerHTML = '⚠️ <b>非塔州邮编</b>：请输入 7000–7999 的塔州邮编；当前按邻近邮编 ' + esc(g.pc) + ' 估算。';
+}
+
+/* ============================ 邮编速查 ============================ */
+function renderPCTable(filter){
+  filter = (filter || '').trim().toUpperCase();
+  const rows = [];
+  for (const r of PC_DATA){
+    const geo = geoFromRec(r);
+    let nearest = null, min = Infinity;
+    for (const id of ['hobart','bellbay','devonport','burnie']){
+      if (geo.km[id] != null && geo.km[id] < min){ min = geo.km[id]; nearest = id; }
+    }
+    const z = geo.island ? 'I' : zoneOf(min, false);
+    const tags = [];
+    if (geo.island) tags.push('岛屿/不可直达');
+    if (CBD_PC.has(r[0])) tags.push('CBD');
+    if (!geo.island && min > 120) tags.push('偏远');
+    if (!geo.island && min > 220) tags.push('极偏远');
+    const row = {pc:r[0], town:r[1], nearest, min, z, tags, geo};
+    if (filter && !(row.pc.indexOf(filter) >= 0 || row.town.toUpperCase().indexOf(filter) >= 0 || (ZONES[z].name.toUpperCase().indexOf(filter) >= 0))) continue;
+    rows.push(row);
+  }
+  rows.sort((a,b) => a.pc.localeCompare(b.pc));
+  $('pc-body').innerHTML = rows.map(row => {
+    const zcls = row.z === 'I' ? 'zI' : 'z' + row.z;
+    return '<tr data-pc="' + row.pc + '"><td><b>' + row.pc + '</b></td><td>' + esc(row.town) + '</td><td>' + esc(row.nearest ? PORTS[row.nearest].cn + ' ' + PORTS[row.nearest].en : '—') + '</td><td class="amt">' + (row.min === Infinity ? '—' : row.min) + '</td><td><span class="zone-pill ' + zcls + '">' + ZONES[row.z].name + '</span></td><td>' + (row.tags.length ? row.tags.join(' · ') : '—') + '</td><td style="color:#64748b">' + (row.geo.island ? '—' : row.geo.km.hobart + ' / ' + row.geo.km.bellbay + ' / ' + row.geo.km.devonport + ' / ' + row.geo.km.burnie) + '</td></tr>';  }).join('') || '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:20px">无匹配结果</td></tr>';
+  $('pc-body').querySelectorAll('tr[data-pc]').forEach(tr => tr.onclick = () => {
+    state.postcode = tr.dataset.pc; state.locality = ''; state.kmOverride = '';
+    syncFormFromState(); render(); switchTab('calc'); window.scrollTo({top:0,behavior:'smooth'});
+  });
+}
+
+/* ============================ 费率设置 ============================ */
+const RATE_SCHEMA = [
+  {group:'港口与官方费率', items:[
+    {path:['wharfage','direct'], label:'Wharfage · 直航（$/TEU）', step:0.01, official:true},
+    {path:['wharfage','bass'], label:'Wharfage · Bass Strait 高频（$/TEU）', step:0.01, official:true},
+    {path:['reeferPlugPerDay'], label:'冷藏柜插电（$/天）', step:0.01, official:true},
+    {path:['quarantineFee'], label:'检疫熏蒸/清洗（$）', step:1, official:true},
+    {path:['weighbridge'], label:'地磅（$/次）', step:0.01, official:true}
+  ]},
+  {group:'码头操作与海运费（市场假设）', items:[
+    {path:['terminal','20'], label:'码头操作/吊装 · 20ft（$）', step:1},
+    {path:['terminal','40'], label:'码头操作/吊装 · 40ft（$）', step:1},
+    {path:['bass','20'], label:'Bass Strait 海运 · 20ft（$）', step:1},
+    {path:['bass','40'], label:'Bass Strait 海运 · 40ft（$）', step:1},
+    {path:['bassReefer','20'], label:'冷藏海运费加价 · 20ft（$）', step:1},
+    {path:['bassReefer','40'], label:'冷藏海运费加价 · 40ft（$）', step:1}
+  ]},
+  {group:'派送基础费率（市场假设，建议替换为协议价）', items:[
+    {path:['cartage','includedKm'], label:'基础派送含里程（km）', step:1},
+    {path:['cartage','base','20'], label:'基础派送 · 20ft（$）', step:1},
+    {path:['cartage','base','40'], label:'基础派送 · 40ft（$）', step:1},
+    {path:['cartage','perkm','20'], label:'超里程单价 · 20ft（$/km）', step:0.01},
+    {path:['cartage','perkm','40'], label:'超里程单价 · 40ft（$/km）', step:0.01}
+  ]},
+  {group:'区域附加与现场作业', items:[
+    {path:['zonePct','C'], label:'区域附加 C（60–120km，%）', step:0.5, pct:true},
+    {path:['zonePct','D'], label:'区域附加 D（120–220km，%）', step:0.5, pct:true},
+    {path:['zonePct','E'], label:'区域附加 E（>220km，%）', step:0.5, pct:true},
+    {path:['access','sideloader','20'], label:'侧卸 · 20ft（$）', step:1},
+    {path:['access','sideloader','40'], label:'侧卸 · 40ft（$）', step:1},
+    {path:['access','crane','20'], label:'吊车 · 20ft（$）', step:1},
+    {path:['access','crane','40'], label:'吊车 · 40ft（$）', step:1},
+    {path:['access','transload','20'], label:'转运 · 20ft（$）', step:1},
+    {path:['access','transload','40'], label:'转运 · 40ft（$）', step:1},
+    {path:['access','unsealed'], label:'未铺装道路附加（$）', step:1},
+    {path:['access','cbd'], label:'CBD 附加（$）', step:1}
+  ]},
+  {group:'时间与附加费率', items:[
+    {path:['wait','freeHours'], label:'免费等待（小时）', step:0.5},
+    {path:['wait','rate','20'], label:'等待费 · 20ft（$/h）', step:1},
+    {path:['wait','rate','40'], label:'等待费 · 40ft（$/h）', step:1},
+    {path:['detention','freeDays'], label:'滞箱免费天数', step:1},
+    {path:['detention','rate','20'], label:'滞箱费 · 20ft（$/天）', step:1},
+    {path:['detention','rate','40'], label:'滞箱费 · 40ft（$/天）', step:1},
+    {path:['dehire','20'], label:'空箱返还 · 20ft（$）', step:1},
+    {path:['dehire','40'], label:'空箱返还 · 40ft（$）', step:1}
+  ]},
+  {group:'燃油、GST 与限重', items:[
+    {path:['fuelPct'], label:'燃油附加率 · 市区（%）', step:0.5, pct:true},
+    {path:['fuelRuralPct'], label:'燃油附加率 · 偏远 >60km（%）', step:0.5, pct:true},
+    {path:['gstPct'], label:'GST（%）', step:0.5, pct:true},
+    {path:['overweight','limit','20'], label:'20ft 公路限重（t）', step:0.1},
+    {path:['overweight','limit','40'], label:'40ft 公路限重（t）', step:0.1},
+    {path:['overweight','perT'], label:'超重附加（$/t）', step:1}
+  ]}
+];
+function getPath(obj, path){ let o = obj; for (const k of path){ if (o == null) return undefined; o = o[k]; } return o; }
+function setPath(obj, path, val){ let o = obj; for (let i = 0; i < path.length - 1; i++){ o = o[path[i]]; } o[path[path.length-1]] = val; }
+function renderSettings(){
+  const grid = $('settings-grid');
+  let html = '';
+  for (const g of RATE_SCHEMA){
+    html += '<div class="set-card"><h4>' + esc(g.group) + '</h4><div class="sd">' + (g.items.some(i => i.official) ? '<span class="pill off">官方</span> ' : '') + '<span class="pill asm">可改</span></div>';
+    for (const it of g.items){
+      const v = getPath(RATES, it.path);
+      const shown = it.pct ? +(v * 100).toFixed(3) : v;
+      html += '<div class="set-row"><label>' + esc(it.label) + '</label><input type="number" data-path="' + it.path.join('.') + '" data-pct="' + (it.pct ? 1 : 0) + '" step="' + it.step + '" value="' + shown + '"></div>';
+    }
+    html += '</div>';
+  }
+  grid.innerHTML = html;
+  grid.querySelectorAll('input').forEach(inp => inp.oninput = () => {
+    const path = inp.dataset.path.split('.');
+    let val = parseFloat(inp.value);
+    if (isNaN(val)) return;
+    if (inp.dataset.pct === '1') val = val / 100;
+    setPath(RATES, path, val);
+    updateTypeTip();
+    render();
+  });
+}
+function saveRates(){
+  try{
+    localStorage.setItem('tasFclRates_v1', JSON.stringify(RATES));
+    $('save-tip').textContent = '✅ 已保存到本机浏览器（' + new Date().toLocaleString('zh-CN') + '）。下次打开自动生效。';
+    toast('费率已保存');
+  }catch(e){ $('save-tip').textContent = '保存失败：' + e.message; }
+}
+function resetRates(){
+  RATES = deepClone(DEFAULT_RATES);
+  try{ localStorage.removeItem('tasFclRates_v1'); }catch(e){}
+  renderSettings(); render(); toast('已恢复默认费率');
+  $('save-tip').textContent = '已恢复为 TasPorts 官方 + 市场默认费率。';
+}
+function exportRates(){
+  const blob = new Blob([JSON.stringify(RATES, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'TAS_FCL_rates.json'; a.click();
+}
+function importRates(){
+  const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.json';
+  inp.onchange = () => {
+    const f = inp.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => {
+      try{
+        const obj = JSON.parse(rd.result);
+        RATES = mergeRates(DEFAULT_RATES, obj);
+        renderSettings(); render(); toast('费率已导入（未保存）');
+        $('save-tip').textContent = '已导入费率，如确认请点“保存到本机”。';
+      }catch(e){ alert('导入失败：不是有效的费率 JSON'); }
+    };
+    rd.readAsText(f);
+  };
+  inp.click();
+}
+
+/* ============================ 样例校验表 ============================ */
+function renderSamples(){
+  const samples = [
+    {label:'Hobart 7000 · 20GP · 直航 Hobart 本地', pc:'7000', type:'20GP', route:'direct', ref:[950, 1300]},
+    {label:'Hobart 7000 · 40GP · 直航 Hobart 本地', pc:'7000', type:'40GP', route:'direct', ref:[1300, 1850]},
+    {label:'Launceston 7250 · 40GP · 直航 Bell Bay', pc:'7250', type:'40GP', route:'direct', ref:[1400, 1950]},
+    {label:'Devonport 7310 · 20GP · Bass Strait 中转', pc:'7310', type:'20GP', route:'bass', ref:[2100, 2950]},
+    {label:'Burnie 7320 · 40GP · Bass Strait 中转', pc:'7320', type:'40GP', route:'bass', ref:[3000, 3950]},
+    {label:'Hobart 7000 · 40GP · 经 Devonport 中转', pc:'7000', type:'40GP', route:'bass', ref:[4000, 5100]},
+    {label:'Queenstown 7467 · 20GP · 经 Burnie', pc:'7467', type:'20GP', route:'bass', ref:[2600, 3400]}
+  ];
+  const rows = samples.map(s => {
+    const st = Object.assign({}, state, {postcode:s.pc, typeId:s.type, route:s.route, port:'auto', kmOverride:'', unload:'dock', semi:'yes', surface:'sealed', period:'day', site:'warehouse', waitHours:0, occupyDays:7, portStorageDays:0, fum:false, weigh:false, dehire:true, fuelPct:null, marginPct:0, gross: s.type.startsWith('40') ? 22 : 18});
+    const q = computeQuote(st, RATES);
+    return '<tr><td>' + esc(s.label) + '</td><td class="amt">' + money0(q.total) + '</td><td class="amt">' + money0(s.ref[0]) + ' ~ ' + money0(s.ref[1]) + '</td></tr>';
+  }).join('');
+  $('sample-body').innerHTML = rows;
+}
+
+/* ============================ 模型页费率表 ============================ */
+function renderModelRates(){
+  const groups = [
+    {t:'港口官方费率（TasPorts FY2027）', rows:[
+      ['Wharfage 直航', money(RATES.wharfage.direct) + ' / TEU'],
+      ['Wharfage Bass Strait 高频船东', money(RATES.wharfage.bass) + ' / TEU'],
+      ['冷藏柜插电', money(RATES.reeferPlugPerDay) + ' / 天'],
+      ['检疫熏蒸', money(RATES.quarantineFee) + ' 起'],
+      ['地磅', money(RATES.weighbridge) + ' / 次']
+    ]},
+    {t:'市场校准费率（可改）', rows:[
+      ['码头操作 · 20ft / 40ft', money(RATES.terminal['20']) + ' / ' + money(RATES.terminal['40'])],
+      ['Bass Strait 海运 · 20ft / 40ft', money(RATES.bass['20']) + ' / ' + money(RATES.bass['40'])],
+      ['基础派送 · 20ft / 40ft', money(RATES.cartage.base['20']) + ' / ' + money(RATES.cartage.base['40']) + '（含 ' + RATES.cartage.includedKm + 'km）'],
+      ['超里程 · 20ft / 40ft', money(RATES.cartage.perkm['20']) + ' / ' + money(RATES.cartage.perkm['40']) + ' /km'],
+      ['区域附加 C / D / E', pct(RATES.zonePct.C) + ' / ' + pct(RATES.zonePct.D) + ' / ' + pct(RATES.zonePct.E)],
+      ['侧卸 · 20ft / 40ft', money(RATES.access.sideloader['20']) + ' / ' + money(RATES.access.sideloader['40'])],
+      ['转运 · 20ft / 40ft', money(RATES.access.transload['20']) + ' / ' + money(RATES.access.transload['40'])],
+      ['等待费 · 20ft / 40ft', money(RATES.wait.rate['20']) + ' / ' + money(RATES.wait.rate['40']) + ' /h（' + RATES.wait.freeHours + 'h 免费）'],
+      ['滞箱 · 20ft / 40ft', money(RATES.detention.rate['20']) + ' / ' + money(RATES.detention.rate['40']) + ' /天（' + RATES.detention.freeDays + ' 天免费）'],
+      ['空箱返还 · 20ft / 40ft', money(RATES.dehire['20']) + ' / ' + money(RATES.dehire['40'])],
+      ['燃油附加率 · 市区 / 偏远', pct(RATES.fuelPct) + ' / ' + pct(RATES.fuelRuralPct)],
+      ['GST', pct(RATES.gstPct)]
+    ]}
+  ];
+  $('model-rates').innerHTML = groups.map(g =>
+    '<h3 class="sub3">' + g.t + '</h3><table class="cost"><tbody>' +
+    g.rows.map(r => '<tr><td>' + esc(r[0]) + '</td><td class="amt">' + esc(r[1]) + '</td></tr>').join('') +
+    '</tbody></table>'
+  ).join('');
+}
+
+/* ============================ Tab 切换 ============================ */
+function switchTab(id){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === id));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + id));
+  if (id === 'pc') renderPCTable($('pc-filter').value);
+  if (id === 'settings') renderSettings();
+  if (id === 'model'){ renderModelRates(); renderSamples(); }
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============================ 事件绑定 ============================ */
+function bindEvents(){
+  document.querySelectorAll('.tab-btn').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+  // 邮编输入 + 联想
+  const pcInput = $('f-pc');
+  const sug = $('pc-suggest');
+  function searchPlace(q){
+    q = q.trim().toUpperCase();
+    if (q.length < 2) return [];
+    const out = [];
+    for (const r of PC_DATA){
+      if (r[0].indexOf(q) === 0 || r[1].toUpperCase().indexOf(q) >= 0){
+        out.push({pc:r[0], town:r[1], island:r[6] === 1});
+        if (out.length >= 10) break;
+      }
+    }
+    if (out.length < 10){
+      for (const name in LOC_MAP){
+        if (name.indexOf(q) >= 0){
+          const pc = LOC_MAP[name];
+          if (!out.some(o => o.pc === pc)){ out.push({pc, town:name, island:pc === '7255' || pc === '7256'}); }
+          if (out.length >= 10) break;
+        }
+      }
+    }
+    return out;
+  }
+  pcInput.addEventListener('input', () => {
+    const v = pcInput.value.trim();
+    if (/^\d{4}$/.test(v)){
+      state.postcode = v;
+      state.kmOverride = '';
+      $('f-km').value = '';
+      renderPortOptions(); updatePortTip(); updateGeoLine(); render();
+      sug.classList.remove('show');
+      return;
+    }
+    const list = searchPlace(v);
+    if (!list.length){ sug.classList.remove('show'); return; }
+    sug.innerHTML = list.map(x => '<button data-pc="' + x.pc + '"><span>' + esc(x.town) + (x.island ? '（岛屿）' : '') + '</span><span class="pc">' + x.pc + '</span></button>').join('');
+    sug.classList.add('show');
+    sug.querySelectorAll('button').forEach(b => b.onclick = () => {
+      pcInput.value = b.dataset.pc;
+      state.postcode = b.dataset.pc; state.kmOverride = ''; $('f-km').value = '';
+      sug.classList.remove('show');
+      renderPortOptions(); updatePortTip(); updateGeoLine(); render();
+    });
+  });
+  pcInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){
+      const v = pcInput.value.trim();
+      if (/^\d{4}$/.test(v)){ state.postcode = v; state.kmOverride=''; $('f-km').value=''; renderPortOptions(); updatePortTip(); updateGeoLine(); render(); }
+    }
+  });
+  document.addEventListener('click', e => {
+    if (!sug.contains(e.target) && e.target !== pcInput) sug.classList.remove('show');
+  });
+  document.querySelectorAll('.quick-pc button').forEach(b => b.onclick = () => {
+    pcInput.value = b.dataset.pc; state.postcode = b.dataset.pc; state.kmOverride = ''; $('f-km').value = '';
+    renderPortOptions(); updatePortTip(); updateGeoLine(); render();
+  });
+
+  $('f-km').addEventListener('input', () => { state.kmOverride = $('f-km').value; render(); });
+  $('f-gross').addEventListener('input', () => { state.gross = parseFloat($('f-gross').value) || 0; render(); });
+  $('f-port').addEventListener('change', () => { state.port = $('f-port').value; updatePortTip(); render(); });
+  $('f-unload').addEventListener('change', () => { state.unload = $('f-unload').value; render(); });
+  $('f-semi').addEventListener('change', () => { state.semi = $('f-semi').value; render(); });
+  $('f-site').addEventListener('change', () => { state.site = $('f-site').value; render(); });
+  $('f-surface').addEventListener('change', () => { state.surface = $('f-surface').value; render(); });
+  $('f-period').addEventListener('change', () => { state.period = $('f-period').value; render(); });
+  $('f-wait').addEventListener('input', () => { state.waitHours = parseFloat($('f-wait').value) || 0; render(); });
+  $('f-days').addEventListener('input', () => { state.occupyDays = parseFloat($('f-days').value) || 0; render(); });
+  $('f-storage').addEventListener('input', () => { state.portStorageDays = parseFloat($('f-storage').value) || 0; render(); });
+  $('f-fuel').addEventListener('input', () => { state.fuelPct = $('f-fuel').value === '' ? null : parseFloat($('f-fuel').value); render(); });
+  $('f-margin').addEventListener('input', () => { state.marginPct = parseFloat($('f-margin').value) || 0; render(); });
+  $('f-dehire').addEventListener('change', () => { state.dehire = $('f-dehire').checked; render(); });
+  $('f-fum').addEventListener('change', () => { state.fum = $('f-fum').checked; render(); });
+  $('f-weigh').addEventListener('change', () => { state.weigh = $('f-weigh').checked; render(); });
+
+  document.querySelectorAll('#route-seg button').forEach(b => b.onclick = () => {
+    state.route = b.dataset.route;
+    state.port = 'auto';
+    document.querySelectorAll('#route-seg button').forEach(x => x.classList.toggle('sel', x === b));
+    renderPortOptions(); updatePortTip(); updateGeoLine(); render();
+  });
+
+  $('btn-calc').onclick = () => { render(); toast('已重新计算'); };
+  $('btn-print').onclick = printQuote;
+  $('btn-copy').onclick = copySummary;
+  $('btn-json').onclick = exportJSON;
+  $('btn-sample').onclick = () => {
+    Object.assign(state, {postcode:'7000', typeId:'40GP', gross:22, route:'direct', port:'auto', unload:'dock', semi:'yes', site:'warehouse', surface:'sealed', period:'day', waitHours:0, occupyDays:7, portStorageDays:0, fuelPct:null, marginPct:0, dehire:true, fum:false, weigh:false, kmOverride:''});
+    syncFormFromState(); render(); toast('已载入 Hobart 示例');
+  };
+  $('btn-reset-form').onclick = () => {
+    Object.assign(state, {postcode:'7000', kmOverride:'', typeId:'40GP', gross:22, route:'direct', port:'auto', unload:'dock', semi:'yes', site:'warehouse', surface:'sealed', period:'day', waitHours:0, occupyDays:7, portStorageDays:0, fuelPct:null, marginPct:0, dehire:true, fum:false, weigh:false});
+    $('f-fuel').value = '';
+    syncFormFromState(); render(); toast('参数已重置');
+  };
+
+  $('pc-filter').addEventListener('input', () => renderPCTable($('pc-filter').value));
+  $('btn-save-rates').onclick = saveRates;
+  $('btn-reset-rates').onclick = resetRates;
+  $('btn-export-rates').onclick = exportRates;
+  $('btn-import-rates').onclick = importRates;
+  $('btn-print-rates').onclick = () => {
+    const el = $('quote-print');
+    el.innerHTML = '<h1 style="font-size:18px">TAS FCL 计费器 · 当前费率表</h1><table>' +
+      RATE_SCHEMA.map(g => '<tr><td colspan="2" style="background:#eee;font-weight:700">' + esc(g.group) + '</td></tr>' +
+        g.items.map(it => {
+          const v = getPath(RATES, it.path);
+          return '<tr><td>' + esc(it.label) + '</td><td class="amt">' + (it.pct ? (v*100).toFixed(1) + '%' : money(v)) + '</td></tr>';
+        }).join('')).join('') + '</table>';
+    window.print();
+  };
+}
+
+/* ============================ 初始化 ============================ */
+function init(){
+  // 恢复上次表单
+  try{
+    const saved = localStorage.getItem('tasFclLastState');
+    if (saved){
+      const s = JSON.parse(saved);
+      for (const k in state){ if (k in s) state[k] = s[k]; }
+    }
+  }catch(e){}
+  if (!findPC(state.postcode) && !nearestRec(state.postcode)) state.postcode = '7000';
+  bindEvents();
+  syncFormFromState();
+  renderPCTable('');
+  render();
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

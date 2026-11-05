@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>正在生成打印文档…</title>
+</head>
+<body>
+<div id="boot">正在读取打印数据…</div>
+<script>
+(function () {
+  var key = new URLSearchParams(location.search).get('k');
+  var auto = new URLSearchParams(location.search).get('auto') === '1';
+  var rec = null;
+  try { rec = JSON.parse(localStorage.getItem(key) || 'null'); } catch (e) {}
+  function fail(msg) {
+    document.body.innerHTML = '<div style="padding:120px 24px;text-align:center;font-family:Microsoft YaHei,sans-serif;color:#3C2E22;font-size:15px;line-height:2">' + msg + '</div>';
+  }
+  if (!rec || !rec.html) {
+    fail('⚠️ 没有找到打印数据。<br>请回到「导出中心」点击「打开打印页」，或使用「服务端一键导出 PDF」。<br><br><code style="background:#fff;border:1px solid #E8DDD0;border-radius:6px;padding:2px 8px">缺少参数 k=' + (key || '') + '</code>');
+    return;
+  }
+  try { localStorage.removeItem(key); } catch (e) {}
+
+  /* 用 DOMParser 解析满版文档，再把它注入当前页面（避免 document.write 残留旧节点） */
+  var parsed = new DOMParser().parseFromString(String(rec.html), 'text/html');
+  document.title = parsed.title || '客户档案';
+
+  /* 1) 文档样式（@page / .page 等） */
+  var styleTags = parsed.head.querySelectorAll('style');
+  for (var i = 0; i < styleTags.length; i++) document.head.appendChild(styleTags[i].cloneNode(true));
+
+  /* 2) 文档正文（每页 .page） */
+  document.body.innerHTML = parsed.body.innerHTML;
+
+  /* 3) 屏幕工具条样式（打印时隐藏，不参与分页） */
+  var ts = document.createElement('style');
+  ts.textContent =
+    '#printBar{position:fixed;left:0;right:0;top:0;z-index:9999;background:#3C2E22;color:#F6EFE4;display:flex;align-items:center;gap:14px;padding:10px 18px;box-shadow:0 4px 18px rgba(0,0,0,.25);font-family:"Microsoft YaHei","PingFang SC",sans-serif;font-size:14px}' +
+    '#printBar b{font-size:15px}' +
+    '#printBar .hint{font-size:12px;opacity:.78}' +
+    '#printBar .sp{flex:1}' +
+    '#printBar button{background:#C8A27A;color:#fff;border:0;border-radius:20px;padding:8px 20px;font-size:14px;cursor:pointer;font-family:inherit}' +
+    '#printBar button:hover{background:#A67B5B}' +
+    '#printBar button.ghost{background:transparent;border:1px solid rgba(255,255,255,.5)}' +
+    'body{padding-top:52px;background:#EFE7DA}' +
+    '@media print{#printBar{display:none!important}body{padding-top:0!important;background:#fff!important}}';
+  document.head.appendChild(ts);
+
+  /* 4) 工具条按钮 */
+  var bar = document.createElement('div');
+  bar.id = 'printBar';
+  bar.innerHTML = '<b>满版 A4 打印预览</b>' +
+    '<span class="hint">左右与底部零留白 · 打印对话框里请把「边距」设为「无」，并勾选「背景图形」</span>' +
+    '<span class="sp"></span>' +
+    '<button id="btnPrint">打印 / 另存为 PDF</button>' +
+    '<button class="ghost" id="btnClose">关闭</button>';
+  document.body.insertBefore(bar, document.body.firstChild);
+  document.getElementById('btnPrint').addEventListener('click', function () { window.print(); });
+  document.getElementById('btnClose').addEventListener('click', function () { window.close(); });
+
+  if (auto) setTimeout(function () { window.print(); }, 800);
+})();
+</script>
+</body>
+</html>
