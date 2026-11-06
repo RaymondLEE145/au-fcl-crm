@@ -4,14 +4,14 @@
 
 # https://raymondlee145.github.io/au-fcl-crm/
 
-登录账号 / 密码 / 验证码：**RAYMOND**（全大写）
+打开即用，**无需账号密码**（与本地 C:\GlobalVertical-CRM 版本完全一致；需要登录门槛时改 js/auth-config.mjs 的 loginRequired）
 
 - 直达 3D 智能装柜：https://raymondlee145.github.io/au-fcl-crm/#/packing
 - 本 GitHub 页面只是**源码仓库**，不是网站入口；网站是上面这个 `github.io` 网址。
 - 手机打开后可「添加到主屏幕」，像 App 一样使用。
 
 ## 打开方式
-1. 打开上面的网站首页，输入账号 / 密码 / 验证码（均为 RAYMOND）即可使用；
+1. 打开上面的网站首页即可直接使用（免登录，与本地版一致）；
 2. 在浏览器地址栏右侧点「安装」，可把它装成桌面应用（PWA），像本地软件一样打开。
 
 ## 功能
