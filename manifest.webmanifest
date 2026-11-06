@@ -1,0 +1,17 @@
+{
+  "name": "澳洲 FCL 客户管理系统 | GlobalVertical",
+  "short_name": "AU FCL CRM",
+  "description": "GlobalVertical 澳洲整柜（FCL）客户管理、3D 装柜、方案推荐与整柜报价系统",
+  "lang": "zh-CN",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F5EFE6",
+  "theme_color": "#3C2E22",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
