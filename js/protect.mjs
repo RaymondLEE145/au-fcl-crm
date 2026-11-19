@@ -116,7 +116,9 @@
     setInterval(check, 900);
     check();
   };
-  try { window.__devtoolsGuard(); } catch (e) {}
+  /* ⑧ 开发者工具检测已停用：原 outerWidth/innerWidth 判断在侧边栏、缩放、高分屏下会误判，导致整页被遮罩。
+     需要恢复时，把下面这行改成 window.__devtoolsGuard(); */
+  try { window.__devtoolsGuard = function () {}; } catch (e) {}
   /* ⑦ 控制台提示（威慑） */
   try {
     console.log('%c⚠ 源码受保护', 'color:#B3261E;font-size:16px;font-weight:800');
