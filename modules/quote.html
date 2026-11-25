@@ -6,6 +6,7 @@
 <base target="_self">
 <title>FCL 整柜自动报价 · 澳洲FCL客户管理系统</title>
 <script src="../vendor/exceljs.min.mjs"></script>
+<script src="../js/excel-quote-style.mjs?v=20261125a"></script>
 <script src="../js/clearance.mjs?v=20261119a"></script>
 <script src="../js/chafta.mjs?v=20261119a"></script>
 <style>
@@ -2666,15 +2667,18 @@ async function exportExcelCustomer(){
   wb.creator = 'GlobalVertical';
   const ws = wb.addWorksheet(t('q_title'), {
     pageSetup: { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1,
-      horizontalCentered: true, margins: { left: 0, right: 0, top: 0.12, bottom: 0, header: 0, footer: 0 } }
+      horizontalCentered: true, margins: { left: 0.1, right: 0.1, top: 0.1, bottom: 0, header: 0, footer: 0 } }
   });
-  const gold = 'FFC8A27A', goldD = 'FFA67B5B', dark = 'FF3C2E22', muted = 'FF7A6A5A', hbg = 'FFF5F0EA', alt = 'FFFDF9F5';
-  const thin = { style:'thin', color:{ argb:'FFD9CFC0' } };
-  const bd = { top:thin, left:thin, bottom:thin, right:thin };
-  const FONT = 'Microsoft YaHei';
-  const widths = [5.5, 34, 11, 6, 14.5, 16, 28];
-  widths.forEach((w,i)=> ws.getColumn(i+1).width = w);
-  ws.properties.defaultRowHeight = 17;
+  /* ---- 统一排版引擎：天蓝/银蓝渐变 · 楷体/ Times New Roman · 自动换行居中 ---- */
+  const GVX = window.GVXls;
+  if(!GVX){ alertModal(t('ex_no_lib')); return; }
+  const th = GVX.theme(S.lang);
+  const P = th.pal;
+  const COLS = [5.5, 34, 11, 6, 14.5, 16, 28];
+  const ctx = { th: th, colWidths: COLS, rows: {} };
+  const put = (r, c, v, o)=> GVX.put(ws, r, c, v, o || {}, ctx);
+  const full = { span: [1, 7], border: false };
+  GVX.sheetBasics(ws, COLS, { defaultRowHeight: 16 });
   let r = 1;
   /* 头部：LOGO + 标题 */
   try{
@@ -2682,153 +2686,76 @@ async function exportExcelCustomer(){
     var _logoSrc = _cstLogo || String(window.__LOGO__ || '');
     var _logoExt = /^data:image\/(png|jpeg|jpg|webp)/i.test(_logoSrc) ? (_logoSrc.match(/^data:image\/(png|jpeg|jpg|webp)/i)[1].toLowerCase().replace('jpg','jpeg')) : 'png';
     const imgId = wb.addImage({ base64: String(_logoSrc || '').split(',')[1], extension: _logoExt });
-    ws.addImage(imgId, { tl:{ col:0, row:0 }, ext:{ width:126, height:36 } });
+    ws.addImage(imgId, { tl:{ col:0, row:0 }, ext:{ width:128, height:36 } });
   }catch(e){}
-  ws.getRow(1).height = 26; ws.getRow(2).height = 15;
-  ws.mergeCells(1,4,1,7);
-  const tc = ws.getCell(1,4);
-  tc.value = t('q_title');
-  tc.font = { name:FONT, size:20, bold:true, color:{ argb:goldD } };
-  tc.alignment = { horizontal:'right', vertical:'middle' };
-  ws.mergeCells(2,4,2,7);
-  const sc = ws.getCell(2,4);
-  sc.value = 'GlobalVertical Logistics · global-vertical.com';
-  sc.font = { name:FONT, size:9, color:{ argb:muted } };
-  sc.alignment = { horizontal:'right', vertical:'middle' };
-  r = 3;
-  ws.getRow(r).height = 6; r++;
-  /* 信息区：标签 + 值 */
+  put(1, 3, t('q_title'), { size: 20, bold: true, color: P.navy, span: [3, 7], border: false, height: 32 });
+  put(2, 3, 'GlobalVertical Logistics · global-vertical.com', { size: 8.5, color: P.muted, span: [3, 7], border: false, height: 16 });
+  GVX.gradRow(ws, 1, 1, 7, P.sky3, P.silver2);   /* 标题区：天蓝 → 银蓝 渐变底 */
+  GVX.gradRow(ws, 2, 1, 7, P.sky3, P.silver2);
+  GVX.gradRow(ws, 3, 1, 7, P.sky1, P.silver1);   /* 分隔色带 */
+  ws.getRow(3).height = 6;
+  /* 信息区 */
+  r = 4;
   pairs.forEach(p=>{
-    ws.mergeCells(r,1,r,2);
-    const lc = ws.getCell(r,1);
-    lc.value = p[0];
-    lc.font = { name:FONT, size:10, bold:true, color:{ argb:muted } };
-    lc.alignment = { horizontal:'left', vertical:'middle' };
-    lc.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:hbg } };
-    lc.border = bd;
-    ws.getCell(r,2).border = bd;
-    ws.mergeCells(r,3,r,7);
-    const vc = ws.getCell(r,3);
-    vc.value = p[1];
-    vc.font = { name:FONT, size:10, color:{ argb:dark } };
-    vc.alignment = { horizontal:'left', vertical:'middle', wrapText:true };
-    [3,4,5,6,7].forEach(c=> ws.getCell(r,c).border = bd);
-    ws.getRow(r).height = 17;
+    put(r, 1, p[0], { size: 9, bold: true, color: P.navy, span: [1, 2], fill: P.ice, border: 'hair', borderColor: P.lineSoft });
+    put(r, 3, p[1], { size: 9.5, color: P.ink, span: [3, 7], border: 'hair', borderColor: P.lineSoft });
+    ws.getRow(r).height = 18;
     r++;
   });
-  r++;
   /* 表头 */
+  r++;
   const hdr = [t('col_no'), t('col_item'), t('q_unit'), t('col_qty'), t('col_unitprice') + ' (' + data.cur + ')', t('col_amount') + ' (' + data.cur + ')', t('col_remark')];
-  hdr.forEach((v,i)=>{
-    const c = ws.getCell(r,i+1);
-    c.value = v;
-    c.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-    c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:hbg } };
-    c.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
-    c.border = bd;
-  });
-  ws.getRow(r).height = 20;
+  hdr.forEach((v,i)=> put(r, i+1, v, { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line }));
+  GVX.gradRow(ws, r, 1, 7, P.sky2, P.silver1, { border: true, borderStyle: 'hair', borderColor: P.line });
+  ws.getRow(r).height = 26;
   r++;
   const subRows = [];
   let no = 0;
   data.segs.forEach(seg=>{
-    ws.mergeCells(r,1,r,7);
-    const c = ws.getCell(r,1);
-    c.value = seg.name;
-    c.font = { name:FONT, size:10.5, bold:true, color:{ argb:goldD } };
-    c.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFBF7F0' } };
-    c.alignment = { horizontal:'left', vertical:'middle' };
-    c.border = bd;
-    ws.getRow(r).height = 18;
+    put(r, 1, seg.name, { size: 10, bold: true, color: P.navy, span: [1, 7], border: 'hair', borderColor: P.lineSoft });
+    GVX.gradRow(ws, r, 1, 7, P.sky3, P.silver2, { border: true, borderStyle: 'hair', borderColor: P.lineSoft });
+    ws.getRow(r).height = 22;
     r++;
     const start = r;
     seg.rows.forEach(x=>{
       no++;
-      const vals = [no, x.name, x.unit, x.qty, x.unitPrice, x.amount, x.remark];
-      vals.forEach((v,i)=>{
-        const cc = ws.getCell(r, i+1);
-        cc.value = v;
-        cc.border = bd;
-        cc.font = { name:FONT, size:(i === 6 ? 9 : 10), color:{ argb:(i === 6 ? muted : dark) } };
-        cc.alignment = { horizontal:(i === 1 || i === 6) ? 'left' : (i >= 4 ? 'right' : 'center'), vertical:'middle', wrapText:true };
-        if(i === 4 || i === 5) cc.numFmt = '#,##0.00';
-        if(i === 1) cc.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-        if(i === 5) cc.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-      });
-      ws.getRow(r).height = 17;
+      put(r, 1, no, { size: 9, color: P.muted, border: 'hair', borderColor: P.lineSoft });
+      put(r, 2, x.name, { size: 9.5, bold: true, color: P.ink, border: 'hair', borderColor: P.lineSoft });
+      put(r, 3, x.unit, { size: 9, color: P.muted, border: 'hair', borderColor: P.lineSoft });
+      put(r, 4, x.qty, { size: 9, color: P.ink, border: 'hair', borderColor: P.lineSoft });
+      put(r, 5, x.unitPrice, { size: 9.5, color: P.ink, numFmt: '#,##0.00', border: 'hair', borderColor: P.lineSoft });
+      put(r, 6, x.amount, { size: 9.5, bold: true, color: P.ink, numFmt: '#,##0.00', border: 'hair', borderColor: P.lineSoft });
+      put(r, 7, x.remark, { size: 8.5, color: P.muted, border: 'hair', borderColor: P.lineSoft });
       r++;
     });
-    ws.mergeCells(r,1,r,5);
-    const stl = ws.getCell(r,1);
-    stl.value = seg.name + ' ' + t('seg_sub');
-    stl.font = { name:FONT, size:10, bold:true, color:{ argb:muted } };
-    stl.alignment = { horizontal:'right', vertical:'middle' };
-    stl.border = bd;
-    for(let c=2;c<=5;c++) ws.getCell(r,c).border = bd;
-    const sta = ws.getCell(r,6);
-    sta.value = { formula:'SUM(F' + start + ':F' + (r-1) + ')', result: seg.subtotal };
-    sta.numFmt = '#,##0.00';
-    sta.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-    sta.alignment = { horizontal:'right', vertical:'middle' };
-    sta.border = bd;
-    ws.getCell(r,7).border = bd;
+    put(r, 1, seg.name + ' ' + t('seg_sub'), { size: 9, bold: true, color: P.accent, span: [1, 5], border: 'hair', borderColor: P.lineSoft });
+    put(r, 6, { formula:'SUM(F' + start + ':F' + (r-1) + ')', result: seg.subtotal }, { size: 9.5, bold: true, color: P.navy, numFmt: '#,##0.00', border: 'hair', borderColor: P.lineSoft });
+    put(r, 7, '', { border: 'hair', borderColor: P.lineSoft });
     subRows.push('F' + r);
-    ws.getRow(r).height = 18;
+    ws.getRow(r).height = 19;
     r++;
   });
   /* 总计 */
-  ws.mergeCells(r,1,r,5);
-  const tl = ws.getCell(r,1);
-  tl.value = t('q_total');
-  tl.font = { name:FONT, size:13, bold:true, color:{ argb:goldD } };
-  tl.alignment = { horizontal:'right', vertical:'middle' };
-  tl.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF6E9' } };
-  tl.border = { top:{ style:'medium', color:{ argb:gold } }, left:thin, bottom:thin, right:thin };
-  for(let c=2;c<=5;c++){ const cc = ws.getCell(r,c); cc.border = { top:{ style:'medium', color:{ argb:gold } }, left:thin, bottom:thin, right:thin }; cc.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF6E9' } }; }
-  const ta = ws.getCell(r,6);
-  ta.value = { formula: subRows.join('+'), result: data.total };
-  ta.numFmt = '#,##0.00';
-  ta.font = { name:FONT, size:13, bold:true, color:{ argb:goldD } };
-  ta.alignment = { horizontal:'right', vertical:'middle' };
-  ta.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFFF6E9' } };
-  ta.border = { top:{ style:'medium', color:{ argb:gold } }, left:thin, bottom:thin, right:thin };
-  const altCell = ws.getCell(r,7);
-  altCell.value = t('est') + ' ' + money(conv(data.total, data.cur, data.other), data.other);
-  altCell.font = { name:FONT, size:9, color:{ argb:muted } };
-  altCell.alignment = { horizontal:'left', vertical:'middle' };
-  altCell.border = { top:{ style:'medium', color:{ argb:gold } }, left:thin, bottom:thin, right:thin };
-  ws.getRow(r).height = 26;
-  r++;
-  r++;
+  put(r, 1, t('q_total'), { size: 13, bold: true, color: P.navy, span: [1, 5], fill: P.total, border: 'thin', borderColor: P.line });
+  put(r, 6, { formula: subRows.join('+'), result: data.total }, { size: 13, bold: true, color: P.navy, numFmt: '#,##0.00', fill: P.total, border: 'thin', borderColor: P.line });
+  put(r, 7, t('est') + ' ' + money(conv(data.total, data.cur, data.other), data.other), { size: 8.5, color: P.muted, fill: P.total, border: 'thin', borderColor: P.line });
+  ws.getRow(r).height = 30;
+  r += 2;
   /* 报价说明 */
-  ws.mergeCells(r,1,r,7);
-  const th = ws.getCell(r,1);
-  th.value = t('q_terms');
-  th.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-  th.alignment = { horizontal:'left', vertical:'middle' };
-  ws.getRow(r).height = 18;
+  put(r, 1, t('q_terms'), { size: 9.5, bold: true, color: P.navy, ...full });
+  ws.getRow(r).height = 20;
   r++;
   quoteTerms().forEach(x=>{
-    ws.mergeCells(r,1,r,7);
-    const c = ws.getCell(r,1);
-    c.value = x;
-    c.font = { name:FONT, size:9, color:{ argb:muted } };
-    c.alignment = { horizontal:'left', vertical:'middle', wrapText:true };
-    ws.getRow(r).height = 14;
+    put(r, 1, x, { size: 8.5, color: P.ink, ...full });
     r++;
   });
   /* ===== 备注：地址通行核验结论（来自客户档案） ===== */
   var an = accessNoteFor(S.cust.customer);
   if(an){
     var VZ = { yes:'可直接进柜', conditional:'有条件能进', no:'不能进', unknown:'数据不足，需现场确认' };
-    ws.mergeCells(r,1,r,7);
-    var nh = ws.getCell(r,1);
-    nh.value = '备注 / REMARK（地址通行核验）';
-    nh.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-    nh.alignment = { horizontal:'left', vertical:'middle' };
-    nh.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFBF3E2' } };
-    nh.border = bd;
-    ws.getRow(r).height = 18;
+    r++;
+    put(r, 1, '备注 / REMARK（地址通行核验）', { size: 9.5, bold: true, color: P.navy, ...full });
+    ws.getRow(r).height = 20;
     r++;
     var lines = [
       '核验结论：' + (VZ[an.verdict] || an.verdict) + '（柜型 ' + (an.ctn || '-') + '）',
@@ -2842,14 +2769,8 @@ async function exportExcelCustomer(){
     lines.push('官方核查（限重/许可）：NHVR 全国路网地图 · 州/领地道路管理方 · 所在 Council 许可；超重或超尺寸车辆上路需 NHVR 或州级许可。');
     lines.push('说明：以上基于 OpenStreetMap 开放数据自动估算，属初筛参考；落柜前请以现场照片与实测（最窄路宽/门宽净高/落柜区长宽/上方净空/地面承载）为准。');
     lines.forEach(function(x){
-      ws.mergeCells(r,1,r,7);
-      var c = ws.getCell(r,1);
-      c.value = x;
       var emph = /^(限制条件|推荐派送方式|官方核查)/.test(String(x));
-      c.font = { name:FONT, size:9, bold: emph, color:{ argb: emph ? 'FFA83232' : muted } };
-      c.alignment = { horizontal:'left', vertical:'middle', wrapText:true };
-      c.border = bd;
-      ws.getRow(r).height = 14;
+      put(r, 1, x, { size: 8.5, bold: emph, color: emph ? 'FF9E4B3F' : P.muted, ...full });
       r++;
     });
     r++;
@@ -2858,29 +2779,31 @@ async function exportExcelCustomer(){
   try{
     if (window.__chinaMode === 'forwarder' && window.__chinaCharges && window.__chinaCharges.length) {
       r++;
-      ws.mergeCells(r,1,r,7);
-      var ch1 = ws.getCell(r,1);
-      ch1.value = '国内费用 / CHINA ORIGIN CHARGES（货代装柜）';
-      ch1.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-      ch1.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFDF3E2' } };
-      ch1.alignment = { horizontal:'left', vertical:'middle' }; ch1.border = bd;
-      ws.getRow(r).height = 18; r++;
-      ['费用项','RMB','AUD','USD','说明'].forEach(function(v5,ii){ var c7 = ws.getCell(r,ii+1); c7.value = v5; c7.font = { name:FONT, size:9, bold:true, color:{ argb:dark } }; c7.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:hbg } }; c7.alignment = { horizontal:'center', vertical:'middle' }; c7.border = bd; });
-      ws.getRow(r).height = 16; r++;
+      put(r, 1, '国内费用 / CHINA ORIGIN CHARGES（货代装柜）', { size: 9.5, bold: true, color: P.navy, ...full });
+      GVX.gradRow(ws, r, 1, 7, P.sky3, P.silver2);
+      ws.getRow(r).height = 20;
+      r++;
+      ['费用项','RMB','AUD','USD','说明'].forEach(function(v5, ii){
+        put(r, ii+1, v5, { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
+      });
+      GVX.gradRow(ws, r, 1, 5, P.sky2, P.silver1, { border: true, borderStyle: 'hair', borderColor: P.line });
+      ws.getRow(r).height = 22;
+      r++;
       var tR = 0, tA = 0, tU = 0;
       window.__chinaCharges.forEach(function(x){
         tR += x.rmb; tA += x.aud; tU += x.usd;
-        [x.name, x.rmb, x.aud, x.usd, x.note].forEach(function(v6,ii){ var c8 = ws.getCell(r,ii+1); c8.value = v6; c8.font = { name:FONT, size:9, color:{ argb:dark } }; c8.alignment = { horizontal: (ii>=1&&ii<=3)?'right':'left', vertical:'middle', wrapText:true }; c8.border = bd; });
-        ws.getRow(r).height = 15; r++;
+        [x.name, x.rmb, x.aud, x.usd, x.note].forEach(function(v6, ii){
+          put(r, ii+1, v6, { size: 9, color: P.ink, border: 'hair', borderColor: P.lineSoft });
+        });
+        r++;
       });
-      ['合计', Math.round(tR*100)/100, Math.round(tA*100)/100, Math.round(tU*100)/100, '汇率 1AUD=4.58RMB / 1USD=6.6RMB'].forEach(function(v7,ii){ var c9 = ws.getCell(r,ii+1); c9.value = v7; c9.font = { name:FONT, size:9, bold:true, color:{ argb:'FFA83232' } }; c9.alignment = { horizontal:(ii>=1&&ii<=3)?'right':'left', vertical:'middle' }; c9.border = bd; });
-      ws.getRow(r).height = 16; r++;
-      ws.mergeCells(r,1,r,7);
-      var cn = ws.getCell(r,1);
-      cn.value = '说明：货代装柜 = 装柜费（1500 RMB/20GP、2200 RMB/40GP、2200 RMB/40HQ）+ 叉车费（35 RMB/件）+ 点箱人工费（1000 RMB/票），上述国内费用已按汇率折算计入本报价总价；工厂装柜则不含以上三项，由客户自行装柜。';
-      cn.font = { name:FONT, size:9, bold:true, color:{ argb:'FFA83232' } };
-      cn.alignment = { horizontal:'left', vertical:'middle', wrapText:true }; cn.border = bd;
-      ws.getRow(r).height = 26; r++;
+      ['合计', Math.round(tR*100)/100, Math.round(tA*100)/100, Math.round(tU*100)/100, '汇率 1AUD=4.58RMB / 1USD=6.6RMB'].forEach(function(v7, ii){
+        put(r, ii+1, v7, { size: 9, bold: true, color: P.navy, fill: P.total, border: 'hair', borderColor: P.line });
+      });
+      ws.getRow(r).height = 20;
+      r++;
+      put(r, 1, '说明：货代装柜 = 装柜费（1500 RMB/20GP、2200 RMB/40GP、2200 RMB/40HQ）+ 叉车费（35 RMB/件）+ 点箱人工费（1000 RMB/票），上述国内费用已按汇率折算计入本报价总价；工厂装柜则不含以上三项，由客户自行装柜。', { size: 8.5, bold: true, color: 'FF9E4B3F', ...full });
+      r++;
     }
   }catch(e){}
   /* ===== 箱单明细 + 装柜方案（从客户档案带出） ===== */
@@ -2898,63 +2821,60 @@ async function exportExcelCustomer(){
       cargos.forEach(function(cg){ (cg.items||[]).forEach(function(it){ items.push(it); }); });
       if(items.length){
         r++;
-        ws.mergeCells(r,1,r,7);
-        var h1 = ws.getCell(r,1);
-        h1.value = '箱单明细 / PACKING LIST（来自客户档案）';
-        h1.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-        h1.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFBF3E2' } };
-        h1.alignment = { horizontal:'left', vertical:'middle' };
-        h1.border = bd;
-        ws.getRow(r).height = 18; r++;
+        put(r, 1, '箱单明细 / PACKING LIST（来自客户档案）', { size: 9.5, bold: true, color: P.navy, ...full });
+        GVX.gradRow(ws, r, 1, 7, P.sky3, P.silver2);
+        ws.getRow(r).height = 20;
+        r++;
         var hd2 = ['#','品名','件数','长(cm)','宽(cm)','高(cm)','单重(kg)','包装'];
-        hd2.forEach(function(v2,ii){ var c2 = ws.getCell(r,ii+1); c2.value = v2; c2.font = { name:FONT, size:9, bold:true, color:{ argb:dark } }; c2.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:hbg } }; c2.alignment = { horizontal:'center', vertical:'middle' }; c2.border = bd; });
-        ws.getRow(r).height = 16; r++;
+        hd2.forEach(function(v2, ii){
+          put(r, ii+1, v2, { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
+        });
+        GVX.gradRow(ws, r, 1, 8, P.sky2, P.silver1);
+        ws.getRow(r).height = 22;
+        r++;
         var totQ = 0, totCbm = 0, totW = 0;
-        items.forEach(function(it,idx){
+        items.forEach(function(it, idx){
           var q2 = Number(it.qty||1), L = Number(it.L_cm||0), W = Number(it.W_cm||0), H = Number(it.H_cm||0), Wt = Number(it.weight_kg||0);
           totQ += q2; totCbm += (L*W*H/1e6)*q2; totW += Wt*q2;
           var vals = [idx+1, it.name||'', q2, L, W, H, Wt, it.type||''];
-          vals.forEach(function(v3,ii){ var c3 = ws.getCell(r,ii+1); c3.value = v3; c3.font = { name:FONT, size:9, color:{ argb:dark } }; c3.alignment = { horizontal: ii>=2 ? 'center' : 'left', vertical:'middle', wrapText:true }; c3.border = bd; });
-          ws.getRow(r).height = 15; r++;
+          vals.forEach(function(v3, ii){
+            put(r, ii+1, v3, { size: 9, color: P.ink, border: 'hair', borderColor: P.lineSoft });
+          });
+          r++;
         });
-        ws.mergeCells(r,1,r,2);
-        var tf = ws.getCell(r,1); tf.value = '合计'; tf.font = { name:FONT, size:9, bold:true, color:{ argb:dark } }; tf.border = bd;
+        put(r, 1, '合计', { size: 9, bold: true, color: P.navy, span: [1, 2], border: 'hair', borderColor: P.line });
         var sums = [totQ, '', '', '', '', Math.round(totCbm*1000)/1000, Math.round(totW*10)/10];
-        sums.forEach(function(v4,ii){ var c4 = ws.getCell(r,ii+3); c4.value = v4; c4.font = { name:FONT, size:9, bold:true, color:{ argb:dark } }; c4.alignment = { horizontal:'center' }; c4.border = bd; });
-        ws.getRow(r).height = 16; r++;
-        var tline = '总体积 ' + (Math.round(totCbm*100)/100) + ' m³ · 总重量 ' + (Math.round(totW*10)/10) + ' kg · 总件数 ' + totQ + ' 件';
-        ws.mergeCells(r,1,r,7); var c5 = ws.getCell(r,1); c5.value = tline; c5.font = { name:FONT, size:9, color:{ argb:muted } }; c5.alignment = { horizontal:'left', vertical:'middle' }; c5.border = bd;
-        ws.getRow(r).height = 15; r++;
+        sums.forEach(function(v4, ii){
+          put(r, ii+3, v4, { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
+        });
+        r++;
+        put(r, 1, '总体积 ' + (Math.round(totCbm*100)/100) + ' m³ · 总重量 ' + (Math.round(totW*10)/10) + ' kg · 总件数 ' + totQ + ' 件', { size: 8.5, color: P.muted, ...full });
+        r++;
       }
       var recs = rec.recommendations || [];
       if(recs.length){
         var lastR = recs[recs.length-1]; var rr2 = lastR.result || {};
         r++;
-        ws.mergeCells(r,1,r,7);
-        var h2b = ws.getCell(r,1);
-        h2b.value = '整柜装柜方案 / LOADING PLAN（来自客户档案）';
-        h2b.font = { name:FONT, size:10, bold:true, color:{ argb:dark } };
-        h2b.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFFBF3E2' } };
-        h2b.alignment = { horizontal:'left', vertical:'middle' }; h2b.border = bd;
-        ws.getRow(r).height = 18; r++;
+        put(r, 1, '整柜装柜方案 / LOADING PLAN（来自客户档案）', { size: 9.5, bold: true, color: P.navy, ...full });
+        GVX.gradRow(ws, r, 1, 7, P.sky3, P.silver2);
+        ws.getRow(r).height = 20;
+        r++;
         var planLines = [
           '推荐柜型：' + (rr2.containerType || rr2.recommended || '-') + ' × ' + (rr2.containerCount || 1),
           '装载体积：' + (rr2.totalCbm != null ? rr2.totalCbm : (rr2.loadedCbm || '-')) + ' m³ · 装载重量：' + (rr2.totalWeight != null ? rr2.totalWeight : '-') + ' kg',
           '空间利用率：' + (rr2.utilization != null ? Math.round(rr2.utilization*1000)/10 + '%' : '-'),
           '装柜说明：重货在下轻货在上，托盘/木箱限 2 层，纸箱可叠，柜内三向不超尺寸；加固件（气袋/挡杆/网）装完后固定。'
         ];
-        planLines.forEach(function(x){ ws.mergeCells(r,1,r,7); var c6 = ws.getCell(r,1); c6.value = x; c6.font = { name:FONT, size:9, color:{ argb:muted } }; c6.alignment = { horizontal:'left', vertical:'middle', wrapText:true }; c6.border = bd; ws.getRow(r).height = 14; r++; });
+        planLines.forEach(function(x){ put(r, 1, x, { size: 8.5, color: P.muted, ...full }); r++; });
       }
     }
   }catch(e){}
-  ws.mergeCells(r,1,r,7);
-  const tk = ws.getCell(r,1);
-  tk.value = t('q_thanks');
-  tk.font = { name:FONT, size:10, bold:true, color:{ argb:goldD } };
-  tk.alignment = { horizontal:'center', vertical:'middle' };
-  ws.getRow(r).height = 22;
+  r++;
+  put(r, 1, t('q_thanks'), { size: 9.5, bold: true, color: P.accent, ...full, height: 24 });
   ws.pageSetup.printArea = 'A1:G' + r;
-  const buf = await wb.xlsx.writeBuffer();
+  GVX.autofit(ctx, ws, { base: 0.92, min: 16 });
+  let buf = await wb.xlsx.writeBuffer();
+  try{ if(GVX) buf = await GVX.patchBackground(buf, {}); }catch(e){}
   const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -3087,30 +3007,33 @@ function bindOps(){
 /* ---------- Excel 导出 ---------- */
 async function exportExcelInternal(){
   if(typeof ExcelJS === 'undefined'){ alertModal(t('ex_no_lib')); return; }
+  const GVX = window.GVXls;
+  if(!GVX){ alertModal(t('ex_no_lib')); return; }
   const q = buildQuote();
   const zh = S.lang === 'zh';
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet(t('xls_sheet1'));
-  const gold = 'FFC8A27A', dark = 'FF3C2E22', muted = 'FF7A6A5A', hbg = 'FFF5F0EA', alt = 'FFFDF9F5';
-  const border = { top:{style:'thin',color:{argb:'FFD9CFC0'}}, left:{style:'thin',color:{argb:'FFD9CFC0'}},
-                   bottom:{style:'thin',color:{argb:'FFD9CFC0'}}, right:{style:'thin',color:{argb:'FFD9CFC0'}} };
-  const widths = [6, 34, 8, 14, 8, 15, 10, 18, 60];
-  widths.forEach((w,i)=> ws.getColumn(i+1).width = w);
+  const th = GVX.theme(S.lang);
+  const P = th.pal;
+  const COLS = [6, 34, 8, 14, 8, 15, 10, 18, 60];
+  const ctx = { th: th, colWidths: COLS, rows: {} };
+  const put = (r, c, v, o)=> GVX.put(ws, r, c, v, o || {}, ctx);
   ws.pageSetup = { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1,
-    horizontalCentered: true, margins: { left: 0, right: 0, top: 0.12, bottom: 0, header: 0, footer: 0 } };
+    horizontalCentered: true, margins: { left: 0.1, right: 0.1, top: 0.1, bottom: 0, header: 0, footer: 0 } };
+  GVX.sheetBasics(ws, COLS, { defaultRowHeight: 16 });
   let r = 1;
   try{
     const imgId = wb.addImage({ base64: String(window.__LOGO__ || '').split(',')[1], extension:'png' });
     ws.getRow(1).height = 40;
     ws.addImage(imgId, { tl:{ col:0, row:0 }, ext:{ width:132, height:37 } });
+    GVX.gradRow(ws, 1, 1, 9, P.sky3, P.silver2);
     r = 2;
   }catch(e){}
-  ws.mergeCells(r,1,r,9);
-  const c0 = ws.getCell(r,1);
-  c0.value = t('xls_title') + '　|　' + L('内部核算表 · 含成本与利润，请勿外发','INTERNAL COST SHEET — contains cost & margin, do not send to customer');
-  c0.font = { name:'Microsoft YaHei', size:16, bold:true, color:{argb:dark} };
-  c0.alignment = { horizontal:'center', vertical:'middle' };
-  ws.getRow(r).height = 30; r++;
+  put(r, 1, t('xls_title') + '　|　' + L('内部核算表 · 含成本与利润，请勿外发','INTERNAL COST SHEET — contains cost & margin, do not send to customer'),
+      { size: 15, bold: true, color: P.navy, span: [1, 9], border: false });
+  GVX.gradRow(ws, r, 1, 9, P.sky2, P.silver1);
+  ws.getRow(r).height = 30;
+  r++;
   const info = [
     [t('xls_customer'), S.cust.customer || '', t('xls_contact'), S.cust.contact || '', t('xls_qdate'), S.cust.qdate || '', t('xls_valid'), S.cust.valid || ''],
     [t('xls_term'), t('term_' + S.term), t('xls_mode'), t('mode_' + S.mode), t('xls_tax'), t('tax_' + S.tax), t('xls_ctn'), S.ctn],
@@ -3121,118 +3044,125 @@ async function exportExcelInternal(){
   info.forEach(line=>{
     let col = 1;
     for(let i=0;i<line.length;i+=2){
-      const lc = ws.getCell(r,col), vc = ws.getCell(r,col+1);
-      lc.value = line[i]; vc.value = line[i+1];
-      lc.font = { name:'Microsoft YaHei', size:10, bold:true, color:{argb:muted} };
-      vc.font = { name:'Microsoft YaHei', size:10, color:{argb:dark} };
-      lc.alignment = vc.alignment = { horizontal:'left', vertical:'middle', wrapText:true };
-      if(i+2 < line.length){ ws.mergeCells(r,col+1,r,col+1); }
+      put(r, col, line[i], { size: 9, bold: true, color: P.navy, fill: P.ice, border: 'hair', borderColor: P.lineSoft, align: 'center' });
+      put(r, col + 1, line[i+1], { size: 9, color: P.ink, border: 'hair', borderColor: P.lineSoft, align: 'center' });
       col += 2;
     }
-    /* 让第 8/9 列也参与展示 */
     r++;
   });
   r++;
   const hdr = [t('col_no'), t('col_item'), t('col_cur'), t('col_unitcost'), t('col_qty'), t('col_cost'), t('col_margin'), t('col_quote') + ' (' + S.cur + ')', t('col_note')];
-  hdr.forEach((h,i)=>{
-    const c = ws.getCell(r,i+1); c.value = h;
-    c.font = { name:'Microsoft YaHei', size:10.5, bold:true, color:{argb:dark} };
-    c.fill = { type:'pattern', pattern:'solid', fgColor:{argb:hbg} };
-    c.alignment = { horizontal:'center', vertical:'middle', wrapText:true };
-    c.border = border;
-  });
+  hdr.forEach((h,i)=> put(r, i+1, h, { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line }));
+  GVX.gradRow(ws, r, 1, 9, P.sky2, P.silver1, { border: true, borderStyle: 'hair', borderColor: P.line });
+  ws.getRow(r).height = 28;
   r++;
   let no = 0;
   const subtotalRows = [];
   ['origin','ocean','dest','tax','other'].forEach(seg=>{
     const rows = q.rows.filter(x=>x.seg === seg);
     if(!rows.length) return;
-    ws.mergeCells(r,1,r,9);
-    const sc = ws.getCell(r,1);
-    sc.value = segName(seg);
-    sc.font = { name:'Microsoft YaHei', size:11, bold:true, color:{argb:gold} };
-    sc.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFBF7F0'} };
-    sc.alignment = { horizontal:'left', vertical:'middle' }; r++;
+    put(r, 1, segName(seg), { size: 10, bold: true, color: P.navy, span: [1, 9], border: 'hair', borderColor: P.lineSoft });
+    GVX.gradRow(ws, r, 1, 9, P.sky3, P.silver2, { border: true, borderStyle: 'hair', borderColor: P.lineSoft });
+    ws.getRow(r).height = 22;
+    r++;
     const start = r;
     rows.forEach(row=>{
       no++;
       const vals = [no, row.name, row.cur, num(row.cost), num(row.qty), num(row.costNative), row.marginMode === 'pass' ? t('pass_tag') : (row.marginRate*100).toFixed(1) + '%', num(row.sellDisp), row.note];
       vals.forEach((v,i)=>{
-        const c = ws.getCell(r, i+1); c.value = v; c.border = border;
-        c.font = { name:'Microsoft YaHei', size:10, color:{argb: i === 8 ? muted : dark} };
-        c.alignment = { horizontal: (i === 1 || i === 8) ? 'left' : (i >= 3 && i <= 7 ? 'right' : 'center'), vertical:'middle', wrapText:true };
-        if(i === 3 || i === 5 || i === 7) c.numFmt = '#,##0.00';
+        put(r, i+1, v, {
+          size: 9,
+          bold: (i === 7),
+          color: (i === 8 ? P.muted : P.ink),
+          numFmt: (i === 3 || i === 5 || i === 7) ? '#,##0.00' : null,
+          border: 'hair', borderColor: P.lineSoft, align: 'center'
+        });
       });
       r++;
     });
     subtotalRows.push(r);
-    const st = ws.getCell(r,1);
-    ws.mergeCells(r,1,r,7);
-    st.value = t('seg_sub') + ' (' + S.cur + ')';
-    st.font = { name:'Microsoft YaHei', size:10.5, bold:true }; st.alignment = { horizontal:'right', vertical:'middle' };
-    st.border = border;
-    const sa = ws.getCell(r,8);
-    sa.value = { formula:'SUM(H' + start + ':H' + (r-1) + ')' };
-    sa.numFmt = '#,##0.00'; sa.font = { name:'Microsoft YaHei', size:10.5, bold:true }; sa.border = border;
-    ws.getCell(r,9).border = border;
+    put(r, 1, t('seg_sub') + ' (' + S.cur + ')', { size: 9.5, bold: true, color: P.accent, span: [1, 7], border: 'hair', borderColor: P.lineSoft });
+    put(r, 8, { formula:'SUM(H' + start + ':H' + (r-1) + ')' }, { size: 9.5, bold: true, color: P.navy, numFmt: '#,##0.00', border: 'hair', borderColor: P.lineSoft });
+    put(r, 9, '', { border: 'hair', borderColor: P.lineSoft });
+    ws.getRow(r).height = 20;
     r++;
   });
-  const tc = ws.getCell(r,1);
-  ws.mergeCells(r,1,r,7);
-  tc.value = t('total_row');
-  tc.font = { name:'Microsoft YaHei', size:12, bold:true, color:{argb:gold} };
-  tc.alignment = { horizontal:'right', vertical:'middle' };
-  const tv = ws.getCell(r,8);
-  tv.value = { formula:'SUM(' + subtotalRows.map(x=>'H' + x).join(',') + ')' };
-  tv.numFmt = '#,##0.00'; tv.font = { name:'Microsoft YaHei', size:12, bold:true, color:{argb:gold} };
-  const rmb = ws.getCell(r,9);
-  rmb.value = t('cost_label') + ' ' + money(q.totals.cost, S.cur) + ' + ' + t('profit_label') + ' ' + money(q.totals.profit, S.cur) + ' ≈ ' + money(conv(q.totals.sell, S.cur, 'RMB'), 'RMB') + ' / ' + money(conv(q.totals.sell, S.cur, S.cur === 'AUD' ? 'USD' : 'AUD'), S.cur === 'AUD' ? 'USD' : 'AUD');
-  rmb.font = { name:'Microsoft YaHei', size:10, color:{argb:muted} };
+  put(r, 1, t('total_row'), { size: 11, bold: true, color: P.navy, span: [1, 7], fill: P.total, border: 'thin', borderColor: P.line });
+  put(r, 8, { formula:'SUM(' + subtotalRows.map(x=>'H' + x).join(',') + ')' }, { size: 11, bold: true, color: P.navy, numFmt: '#,##0.00', fill: P.total, border: 'thin', borderColor: P.line });
+  put(r, 9, t('cost_label') + ' ' + money(q.totals.cost, S.cur) + ' + ' + t('profit_label') + ' ' + money(q.totals.profit, S.cur) + ' ≈ ' + money(conv(q.totals.sell, S.cur, 'RMB'), 'RMB') + ' / ' + money(conv(q.totals.sell, S.cur, S.cur === 'AUD' ? 'USD' : 'AUD'), S.cur === 'AUD' ? 'USD' : 'AUD'),
+      { size: 8.5, color: P.muted, fill: P.total, border: 'thin', borderColor: P.line });
+  ws.getRow(r).height = 30;
+  GVX.autofit(ctx, ws, { base: 0.92, min: 16 });
+
   /* 第二张表：四档利润率对比 */
   const ws2 = wb.addWorksheet(t('xls_sheet2'));
-  [30,18,18,18,18,18].forEach((w,i)=> ws2.getColumn(i+1).width = w);
-  ws2.getCell(1,1).value = t('xls_sheet2') + ' (' + S.cur + ')';
-  ws2.getCell(1,1).font = { name:'Microsoft YaHei', size:13, bold:true, color:{argb:dark} };
-  ws2.getCell(2,1).value = t('xls_item');
+  const COLS2 = [30, 18, 18, 18, 18, 18];
+  const ctx2 = { th: th, colWidths: COLS2, rows: {} };
+  const put2 = (r, c, v, o)=> GVX.put(ws2, r, c, v, o || {}, ctx2);
+  GVX.sheetBasics(ws2, COLS2, { defaultRowHeight: 16 });
+  put2(1, 1, t('xls_sheet2') + ' (' + S.cur + ')', { size: 13, bold: true, color: P.navy, span: [1, 6], border: false });
+  GVX.gradRow(ws2, 1, 1, 6, P.sky3, P.silver2);
+  ws2.getRow(1).height = 26;
+  put2(2, 1, t('xls_item'), { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
   CFG.tiers.forEach((x,i)=>{
-    ws2.getCell(2, i*2+2).value = t('rate_label') + ' ' + (num(x)*100).toFixed(0) + '%';
+    put2(2, i*2+2, t('rate_label') + ' ' + (num(x)*100).toFixed(0) + '%', { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
   });
-  ws2.getCell(2, 2 + CFG.tiers.length*2).value = t('cost_label') + ' (' + S.cur + ')';
-  ws2.getRow(2).font = { bold:true };
+  put2(2, 2 + CFG.tiers.length*2, t('cost_label') + ' (' + S.cur + ')', { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
+  GVX.gradRow(ws2, 2, 1, 6, P.sky2, P.silver1, { border: true, borderStyle: 'hair', borderColor: P.line });
+  ws2.getRow(2).height = 24;
   const quotes = CFG.tiers.map(x=>buildQuote(x));
   const base = quotes[0];
   let rr = 3;
   base.rows.forEach((row, idx)=>{
-    ws2.getCell(rr,1).value = row.zh;
+    put2(rr, 1, row.zh, { size: 9, color: P.ink, border: 'hair', borderColor: P.lineSoft });
     CFG.tiers.forEach((x,i)=>{ const qq = quotes[i];
-      ws2.getCell(rr, i*2+2).value = num(qq.rows[idx] ? qq.rows[idx].sellDisp : 0); });
-    ws2.getCell(rr, 2 + CFG.tiers.length*2).value = num(row.costDisp);
+      put2(rr, i*2+2, num(qq.rows[idx] ? qq.rows[idx].sellDisp : 0), { size: 9, color: P.ink, numFmt: '#,##0.00', border: 'hair', borderColor: P.lineSoft }); });
+    put2(rr, 2 + CFG.tiers.length*2, num(row.costDisp), { size: 9, color: P.muted, numFmt: '#,##0.00', border: 'hair', borderColor: P.lineSoft });
     rr++;
   });
-  ws2.getCell(rr,1).value = t('xls_total');
-  CFG.tiers.forEach((x,i)=> ws2.getCell(rr, i*2+2).value = num(quotes[i].totals.sell));
-  ws2.getCell(rr, 2 + CFG.tiers.length*2).value = num(base.totals.cost);
-  ws2.getRow(rr).font = { bold:true };
-  for(let i=1;i<=2 + CFG.tiers.length*2;i++) ws2.getColumn(i).numFmt = '#,##0.00';
+  put2(rr, 1, t('xls_total'), { size: 9.5, bold: true, color: P.navy, fill: P.total, border: 'thin', borderColor: P.line });
+  CFG.tiers.forEach((x,i)=> put2(rr, i*2+2, num(quotes[i].totals.sell), { size: 9.5, bold: true, color: P.navy, numFmt: '#,##0.00', fill: P.total, border: 'thin', borderColor: P.line }));
+  put2(rr, 2 + CFG.tiers.length*2, num(base.totals.cost), { size: 9.5, bold: true, color: P.navy, numFmt: '#,##0.00', fill: P.total, border: 'thin', borderColor: P.line });
+  GVX.autofit(ctx2, ws2, { base: 0.92, min: 16 });
+
   /* 第三张表：派送费明细 */
   if(S.au.result && S.au.result.ok){
     const ws3 = wb.addWorksheet(t('xls_sheet3'));
-    [40,16,40].forEach((w,i)=> ws3.getColumn(i+1).width = w);
+    const COLS3 = [40, 16, 40];
+    const ctx3 = { th: th, colWidths: COLS3, rows: {} };
+    const put3 = (r, c, v, o)=> GVX.put(ws3, r, c, v, o || {}, ctx3);
+    GVX.sheetBasics(ws3, COLS3, { defaultRowHeight: 16 });
     const R0 = S.au.result;
     const lines = [[t('xls_pc'), R0.pc + ' ' + R0.suburb + ' ' + R0.st, ''], [t('xls_destport'), auPortName(R0.portName), R0.why],
       [L('公路里程','Road distance'), R0.km + ' km', zoneName(R0.zone)], [L('柜型 / 车型','Container / trailer'), S.ctn + ' / ' + (R0.mode === 'sl' ? t('del_sl') : t('del_std')), '']];
-    lines.forEach((l,i)=>{ ws3.getCell(i+1,1).value = l[0]; ws3.getCell(i+1,2).value = l[1]; ws3.getCell(i+1,3).value = l[2]; });
+    lines.forEach((l,i)=>{
+      put3(i+1, 1, l[0], { size: 9, bold: true, color: P.navy, fill: P.ice, border: 'hair', borderColor: P.lineSoft });
+      put3(i+1, 2, l[1], { size: 9, color: P.ink, border: 'hair', borderColor: P.lineSoft });
+      put3(i+1, 3, l[2], { size: 9, color: P.muted, border: 'hair', borderColor: P.lineSoft });
+    });
     let k = lines.length + 1;
-    ws3.getCell(k,1).value = t('xls_costitem'); ws3.getCell(k,2).value = t('xls_amount'); ws3.getCell(k,3).value = t('xls_desc');
-    ws3.getRow(k).font = { bold:true }; k++;
-    R0.rows.forEach(x=>{ ws3.getCell(k,1).value = L(x.l, x.lEn); ws3.getCell(k,2).value = num(x.a); ws3.getCell(k,3).value = L(x.n, x.nEn); k++; });
-    ws3.getCell(k,1).value = t('xls_del_cost');
-    ws3.getCell(k,2).value = num(R0.cost);
-    ws3.getCell(k+1,1).value = t('xls_del_quote') + ' (' + t('rate_label') + ' ' + (num(S.tier)*100).toFixed(0) + '%)';
-    ws3.getCell(k+1,2).value = num(R0.cost) * (1 + num(S.tier));
-    ws3.getColumn(2).numFmt = '#,##0.00';
+    put3(k, 1, t('xls_costitem'), { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
+    put3(k, 3, t('xls_desc'), { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
+    put3(k, 2, t('xls_amount'), { size: 9, bold: true, color: P.navy, border: 'hair', borderColor: P.line });
+    GVX.gradRow(ws3, k, 1, 3, P.sky2, P.silver1, { border: true, borderStyle: 'hair', borderColor: P.line });
+    ws3.getRow(k).height = 22;
+    k++;
+    R0.rows.forEach(x=>{
+      put3(k, 1, L(x.l, x.lEn), { size: 9, color: P.ink, border: 'hair', borderColor: P.lineSoft });
+      put3(k, 2, num(x.a), { size: 9, color: P.ink, numFmt: '#,##0.00', border: 'hair', borderColor: P.lineSoft });
+      put3(k, 3, L(x.n, x.nEn), { size: 9, color: P.muted, border: 'hair', borderColor: P.lineSoft });
+      k++;
+    });
+    put3(k, 1, t('xls_del_cost'), { size: 9.5, bold: true, color: P.navy, fill: P.total, border: 'thin', borderColor: P.line });
+    put3(k, 2, num(R0.cost), { size: 9.5, bold: true, color: P.navy, numFmt: '#,##0.00', fill: P.total, border: 'thin', borderColor: P.line });
+    put3(k, 3, '', { fill: P.total, border: 'thin', borderColor: P.line });
+    put3(k+1, 1, t('xls_del_quote') + ' (' + t('rate_label') + ' ' + (num(S.tier)*100).toFixed(0) + '%)', { size: 9.5, bold: true, color: P.accent, fill: P.total, border: 'thin', borderColor: P.line });
+    put3(k+1, 2, num(R0.cost) * (1 + num(S.tier)), { size: 9.5, bold: true, color: P.accent, numFmt: '#,##0.00', fill: P.total, border: 'thin', borderColor: P.line });
+    put3(k+1, 3, '', { fill: P.total, border: 'thin', borderColor: P.line });
+    GVX.autofit(ctx3, ws3, { base: 0.92, min: 16 });
   }
-  const buf = await wb.xlsx.writeBuffer();
+  let buf = await wb.xlsx.writeBuffer();
+  try{ buf = await GVX.patchBackground(buf, {}); }catch(e){}
   const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
