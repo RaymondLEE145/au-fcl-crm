@@ -9,8 +9,8 @@ window.CRM_AUTH = {
   /* 免登录模式：=false 时打开即用，不显示登录界面、不校验账号密码验证码 */
   loginRequired: false,
   /* 版本门禁：build 变了 → 旧登录状态作废、旧页面强制刷新到最新版 */
-  build: '20261119a',
-  epoch: '20261119a',
+  build: '20261126a',
+  epoch: '20261126a',
   /* ===== 每日动态密码 =====
      dynSecret：你的私钥（决定每天密码序列，改一次全序列都变；不要外传）
      dynEnabled：true=开启动态密码 */
